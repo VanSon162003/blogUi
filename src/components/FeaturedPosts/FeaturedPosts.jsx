@@ -3,6 +3,8 @@ import PostCard from "../PostCard/PostCard";
 import EmptyState from "../EmptyState/EmptyState";
 import Loading from "../Loading/Loading";
 import styles from "./FeaturedPosts.module.scss";
+import useUser from "../../hook/useUser";
+import postsService from "../../services/postsService";
 
 const FeaturedPosts = ({
     posts = [],
@@ -13,6 +15,8 @@ const FeaturedPosts = ({
     className,
     ...props
 }) => {
+    const { currentUser: user } = useUser();
+
     if (loading) {
         return (
             <section
@@ -41,6 +45,16 @@ const FeaturedPosts = ({
         );
     }
 
+    const handle = async (postId) => {
+        console.log(postId);
+
+        try {
+            await postsService.toggleLikePost(postId);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
     const displayPosts = posts.slice(0, maxPosts);
 
     return (
@@ -59,14 +73,17 @@ const FeaturedPosts = ({
                         }`}
                     >
                         <PostCard
+                            id={post.id}
                             title={post.title}
-                            excerpt={post.excerpt}
-                            author={post.author}
-                            publishedAt={post.publishedAt}
-                            readTime={post.readTime}
-                            topic={post.topic}
+                            excerpt={post.meta_description}
+                            author={post.user}
+                            publishedAt={post.published_at}
+                            readTime={2}
+                            topic={post.topics.name}
                             slug={post.slug}
-                            featuredImage={post.featuredImage}
+                            featuredImage={post.thumbnail}
+                            isLiked={post?.is_like ? true : false}
+                            onLike={(id, liked) => handle(id, liked)}
                         />
                     </div>
                 ))}
@@ -81,11 +98,8 @@ FeaturedPosts.propTypes = {
             id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
             title: PropTypes.string.isRequired,
             excerpt: PropTypes.string,
-            author: PropTypes.shape({
-                name: PropTypes.string.isRequired,
-                avatar: PropTypes.string,
-            }).isRequired,
-            publishedAt: PropTypes.string.isRequired,
+            user: PropTypes.shape({}).isRequired,
+            published_at: PropTypes.string.isRequired,
             readTime: PropTypes.number,
             topic: PropTypes.string,
             slug: PropTypes.string.isRequired,

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Input, Button } from "../../components";
 import styles from "./ResetPassword.module.scss";
+import authService from "../../services/authService";
 
 const ResetPassword = () => {
     const [searchParams] = useSearchParams();
@@ -16,6 +17,8 @@ const ResetPassword = () => {
     const [isTokenValid, setIsTokenValid] = useState(null);
     const [isSubmitted, setIsSubmitted] = useState(false);
 
+    const [userId, setUserId] = useState(null);
+
     useEffect(() => {
         // Validate token on component mount
         const validateToken = async () => {
@@ -25,11 +28,12 @@ const ResetPassword = () => {
             }
 
             try {
-                // Simulate API call to validate token
-                await new Promise((resolve) => setTimeout(resolve, 1000));
+                const { data } = await authService.verifyToken(token);
+                setUserId(data.userId);
 
                 // Mock token validation (in real app, this would be an API call)
                 const isValid = token.length > 10; // Simple mock validation
+
                 setIsTokenValid(isValid);
             } catch (error) {
                 console.error("Token validation failed:", error);
@@ -87,14 +91,13 @@ const ResetPassword = () => {
             return;
         }
 
+        await authService.resetPassword({
+            ...formData,
+            userId,
+        });
         setIsSubmitting(true);
 
         try {
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-
-            // Mock successful password reset
-            console.log("Password reset successful");
             setIsSubmitted(true);
         } catch (error) {
             console.error("Password reset failed:", error);

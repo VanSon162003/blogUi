@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Input, Button } from "../../components";
 import styles from "./ForgotPassword.module.scss";
+import authService from "../../services/authService";
 
 const ForgotPassword = () => {
     const [formData, setFormData] = useState({
         email: "",
     });
+
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -51,8 +53,9 @@ const ForgotPassword = () => {
         setIsSubmitting(true);
 
         try {
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            await authService.forgotPassword({
+                email: formData.email,
+            });
 
             // Mock successful submission
             console.log("Password reset email sent to:", formData.email);
@@ -60,7 +63,7 @@ const ForgotPassword = () => {
         } catch (error) {
             console.error("Failed to send reset email:", error);
             setErrors({
-                submit: "Failed to send reset email. Please try again.",
+                submit: "Invalid email. Please try again.",
             });
         } finally {
             setIsSubmitting(false);

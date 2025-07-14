@@ -3,12 +3,22 @@ import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import FallbackImage from "./components/FallbackImage/FallbackImage";
 import "./App.css";
+import ToastifyContainer from "./components/ToastifyContainer";
+import { toast } from "react-toastify";
 
 function App() {
     const [count, setCount] = useState(0);
 
     return (
         <>
+            <ToastifyContainer />
+            <button
+                onClick={() => {
+                    toast.success("Toast này đã hoạt động!");
+                }}
+            >
+                Test Toast
+            </button>
             <div>
                 <a href="https://vitejs.dev" target="_blank">
                     <FallbackImage

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Input, Button } from "../../components";
 import styles from "./Login.module.scss";
+import authService from "../../services/authService";
+import { toast } from "react-toastify";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -60,11 +62,15 @@ const Login = () => {
         setIsSubmitting(true);
 
         try {
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            const { data } = await authService.login({
+                email: formData.email,
+                password: formData.password,
+            });
+            toast.success("Login success");
+            console.log(data);
 
-            // Mock successful login
-            console.log("Login successful:", formData);
+            localStorage.setItem("token", data.access_token);
+            localStorage.setItem("refresh_token", data.refresh_token);
 
             // Navigate to home or dashboard
             navigate("/", { replace: true });

@@ -5,6 +5,12 @@ import FallbackImage from "../FallbackImage/FallbackImage";
 import Button from "../Button/Button";
 import styles from "./ChatWindow.module.scss";
 
+import socketClient from "../../utils/websocket";
+
+import conversationService from "../../services/conversationService";
+import messageService from "../../services/messageService";
+import useUser from "../../hook/useUser";
+
 const ChatWindow = ({
     user,
     isOpen = false,
@@ -20,90 +26,125 @@ const ChatWindow = ({
     const messagesEndRef = useRef(null);
     const menuRef = useRef(null);
 
+    useUser();
+
     // Mock messages for demonstration
-    const mockMessages = [
-        {
-            id: 1,
-            text: "Hey! How are you doing?",
-            sender: "other",
-            timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(), // 25 minutes ago
-        },
-        {
-            id: 2,
-            text: "I'm good, thanks! Just working on some new blog posts.",
-            sender: "me",
-            timestamp: new Date(Date.now() - 23 * 60 * 1000).toISOString(), // 23 minutes ago
-        },
-        {
-            id: 3,
-            text: "That sounds interesting! What topics are you covering?",
-            sender: "other",
-            timestamp: new Date(Date.now() - 21 * 60 * 1000).toISOString(), // 21 minutes ago
-        },
-        {
-            id: 4,
-            text: "I'm writing about React performance optimization and JavaScript best practices.",
-            sender: "me",
-            timestamp: new Date(Date.now() - 19 * 60 * 1000).toISOString(), // 19 minutes ago
-        },
-        {
-            id: 5,
-            text: "Wow, those are really hot topics right now! 🔥",
-            sender: "other",
-            timestamp: new Date(Date.now() - 17 * 60 * 1000).toISOString(), // 17 minutes ago
-        },
-        {
-            id: 6,
-            text: "Yeah, I've been getting a lot of requests for those topics from readers.",
-            sender: "me",
-            timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
-        },
-        {
-            id: 7,
-            text: "Have you considered doing a series on advanced React patterns?",
-            sender: "other",
-            timestamp: new Date(Date.now() - 13 * 60 * 1000).toISOString(), // 13 minutes ago
-        },
-        {
-            id: 8,
-            text: "That's actually a great idea! I could cover hooks, context, custom hooks, and performance patterns.",
-            sender: "me",
-            timestamp: new Date(Date.now() - 11 * 60 * 1000).toISOString(), // 11 minutes ago
-        },
-        {
-            id: 9,
-            text: "Perfect! I'd love to read that series. When are you planning to publish?",
-            sender: "other",
-            timestamp: new Date(Date.now() - 9 * 60 * 1000).toISOString(), // 9 minutes ago
-        },
-        {
-            id: 10,
-            text: "I'm thinking of starting next week. Want to make sure I have solid examples.",
-            sender: "me",
-            timestamp: new Date(Date.now() - 7 * 60 * 1000).toISOString(), // 7 minutes ago
-        },
-        {
-            id: 11,
-            text: "Smart approach! Quality content takes time. Looking forward to it! 👍",
-            sender: "other",
-            timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-        },
-        {
-            id: 12,
-            text: "Thanks for the encouragement! It really helps to have supportive readers like you.",
-            sender: "me",
-            timestamp: new Date(Date.now() - 3 * 60 * 1000).toISOString(), // 3 minutes ago
-        },
-        {
-            id: 13,
-            text: "Always happy to support great content creators! Keep up the amazing work! ✨",
-            sender: "other",
-            timestamp: new Date(Date.now() - 1 * 60 * 1000).toISOString(), // 1 minute ago
-        },
-    ];
+    // const mockMessages = [
+    //     {
+    //         id: 1,
+    //         text: "Hey! How are you doing?",
+    //         sender: "other",
+    //         timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(), // 25 minutes ago
+    //     },
+    //     {
+    //         id: 2,
+    //         text: "I'm good, thanks! Just working on some new blog posts.",
+    //         sender: "me",
+    //         timestamp: new Date(Date.now() - 23 * 60 * 1000).toISOString(), // 23 minutes ago
+    //     },
+    //     {
+    //         id: 3,
+    //         text: "That sounds interesting! What topics are you covering?",
+    //         sender: "other",
+    //         timestamp: new Date(Date.now() - 21 * 60 * 1000).toISOString(), // 21 minutes ago
+    //     },
+    //     {
+    //         id: 4,
+    //         text: "I'm writing about React performance optimization and JavaScript best practices.",
+    //         sender: "me",
+    //         timestamp: new Date(Date.now() - 19 * 60 * 1000).toISOString(), // 19 minutes ago
+    //     },
+    //     {
+    //         id: 5,
+    //         text: "Wow, those are really hot topics right now! 🔥",
+    //         sender: "other",
+    //         timestamp: new Date(Date.now() - 17 * 60 * 1000).toISOString(), // 17 minutes ago
+    //     },
+    //     {
+    //         id: 6,
+    //         text: "Yeah, I've been getting a lot of requests for those topics from readers.",
+    //         sender: "me",
+    //         timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
+    //     },
+    //     {
+    //         id: 7,
+    //         text: "Have you considered doing a series on advanced React patterns?",
+    //         sender: "other",
+    //         timestamp: new Date(Date.now() - 13 * 60 * 1000).toISOString(), // 13 minutes ago
+    //     },
+    //     {
+    //         id: 8,
+    //         text: "That's actually a great idea! I could cover hooks, context, custom hooks, and performance patterns.",
+    //         sender: "me",
+    //         timestamp: new Date(Date.now() - 11 * 60 * 1000).toISOString(), // 11 minutes ago
+    //     },
+    //     {
+    //         id: 9,
+    //         text: "Perfect! I'd love to read that series. When are you planning to publish?",
+    //         sender: "other",
+    //         timestamp: new Date(Date.now() - 9 * 60 * 1000).toISOString(), // 9 minutes ago
+    //     },
+    //     {
+    //         id: 10,
+    //         text: "I'm thinking of starting next week. Want to make sure I have solid examples.",
+    //         sender: "me",
+    //         timestamp: new Date(Date.now() - 7 * 60 * 1000).toISOString(), // 7 minutes ago
+    //     },
+    //     {
+    //         id: 11,
+    //         text: "Smart approach! Quality content takes time. Looking forward to it! 👍",
+    //         sender: "other",
+    //         timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
+    //     },
+    //     {
+    //         id: 12,
+    //         text: "Thanks for the encouragement! It really helps to have supportive readers like you.",
+    //         sender: "me",
+    //         timestamp: new Date(Date.now() - 3 * 60 * 1000).toISOString(), // 3 minutes ago
+    //     },
+    //     {
+    //         id: 13,
+    //         text: "Always happy to support great content creators! Keep up the amazing work! ✨",
+    //         sender: "other",
+    //         timestamp: new Date(Date.now() - 1 * 60 * 1000).toISOString(), // 1 minute ago
+    //     },
+    // ];
+
+    const nameSub = "son";
 
     useEffect(() => {
-        setMessages(mockMessages);
+        (async () => {
+            const conversation =
+                await conversationService.getConversationByName(nameSub);
+
+            const dataMessage =
+                await messageService.getAllMessageByConversationId(
+                    conversation.data.id
+                );
+
+            setMessages(dataMessage.data);
+        })();
+    }, []);
+
+    useEffect(() => {
+        const channel = socketClient.subscribe(nameSub);
+        channel.bind("new-message", function (data) {
+            setMessages((prev) => [
+                ...prev,
+                {
+                    content: data.message,
+                    createdAt: Date.now(),
+                },
+            ]);
+        });
+
+        // (async () => {
+        //     await chatRealtimeService.sendMessage({});
+        // })();
+
+        return () => {
+            channel.unsubscribe();
+        };
     }, []);
 
     // Scroll to bottom when window opens or when new messages arrive
@@ -171,10 +212,9 @@ const ChatWindow = ({
         e.preventDefault();
         if (message.trim()) {
             const newMessage = {
-                id: messages.length + 1,
-                text: message.trim(),
-                sender: "me",
-                timestamp: new Date().toISOString(),
+                content: message.trim(),
+                sender_id: 16,
+                createdAt: new Date().toISOString(),
             };
             setMessages([...messages, newMessage]);
             setMessage("");
@@ -187,10 +227,12 @@ const ChatWindow = ({
     };
 
     const formatTime = (timestamp) => {
-        return new Date(timestamp).toLocaleTimeString("en-US", {
+        const date = new Date(timestamp).toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
         });
+
+        return date;
     };
 
     if (!isOpen) return null;
@@ -303,17 +345,17 @@ const ChatWindow = ({
 
             {/* Messages */}
             <div className={styles.messages}>
-                {messages.map((msg) => (
+                {messages.map((msg, i) => (
                     <div
-                        key={msg.id}
+                        key={i}
                         className={`${styles.message} ${
-                            msg.sender === "me" ? styles.own : styles.other
+                            msg.sender_id === 16 ? styles.own : styles.other
                         }`}
                     >
                         <div className={styles.messageContent}>
-                            <p className={styles.messageText}>{msg.text}</p>
+                            <p className={styles.messageText}>{msg.content}</p>
                             <span className={styles.messageTime}>
-                                {formatTime(msg.timestamp)}
+                                {formatTime(msg.createdAt)}
                             </span>
                         </div>
                     </div>

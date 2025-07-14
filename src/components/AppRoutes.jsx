@@ -30,6 +30,9 @@ const ForgotPassword = lazy(() =>
 const ResetPassword = lazy(() =>
     import("../pages/ResetPassword/ResetPassword")
 );
+
+const VerifyEmail = lazy(() => import("./VerifyEmail/VerifyEmail"));
+
 const NotFound = lazy(() => import("../pages/NotFound/NotFound"));
 
 const AppRoutes = () => {
@@ -90,6 +93,15 @@ const AppRoutes = () => {
                         element={
                             <AuthLayout>
                                 <ResetPassword />
+                            </AuthLayout>
+                        }
+                    />
+
+                    <Route
+                        path="/verify-email"
+                        element={
+                            <AuthLayout>
+                                <VerifyEmail />
                             </AuthLayout>
                         }
                     />

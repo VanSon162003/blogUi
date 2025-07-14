@@ -7,6 +7,7 @@ import FallbackImage from "../FallbackImage/FallbackImage";
 import styles from "./PostCard.module.scss";
 
 const PostCard = ({
+    id,
     title,
     excerpt,
     author,
@@ -56,7 +57,7 @@ const PostCard = ({
         );
 
         try {
-            await onLike(slug, !optimisticLiked);
+            await onLike(id, !optimisticLiked);
         } catch (error) {
             // Revert on error
             setOptimisticLiked(optimisticLiked);
@@ -134,9 +135,13 @@ const PostCard = ({
                 {/* Topic Badge */}
                 {topic && (
                     <div className={styles.topicBadge}>
-                        <Badge variant="primary" size="sm">
-                            {topic}
-                        </Badge>
+                        {topic.map((item, i) => {
+                            return (
+                                <Badge key={i} variant="primary" size="sm">
+                                    {item.name}
+                                </Badge>
+                            );
+                        })}
                     </div>
                 )}
 
@@ -164,11 +169,13 @@ const PostCard = ({
                         <Link
                             to={`/profile/${
                                 author?.username ||
-                                author?.name?.toLowerCase().replace(/\s+/g, "-")
+                                author?.username
+                                    ?.toLowerCase()
+                                    .replace(/\s+/g, "-")
                             }`}
                             className={styles.authorName}
                         >
-                            {author?.name}
+                            {`${author?.first_name} ${author?.last_name}`}
                         </Link>
                     </div>
 
@@ -324,16 +331,23 @@ const PostCard = ({
 };
 
 PostCard.propTypes = {
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     title: PropTypes.string.isRequired,
     excerpt: PropTypes.string,
     author: PropTypes.shape({
-        name: PropTypes.string.isRequired,
+        first_name: PropTypes.string.isRequired,
+        last_name: PropTypes.string.isRequired,
         avatar: PropTypes.string,
         username: PropTypes.string,
     }).isRequired,
     publishedAt: PropTypes.string.isRequired,
     readTime: PropTypes.number,
-    topic: PropTypes.string,
+    topic: PropTypes.arrayOf(
+        PropTypes.shape({
+            name: PropTypes.string.isRequired,
+        })
+    ),
+
     slug: PropTypes.string,
     featuredImage: PropTypes.string,
     loading: PropTypes.bool,

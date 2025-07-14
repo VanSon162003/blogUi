@@ -5,6 +5,8 @@ import EmptyState from "../EmptyState/EmptyState";
 import Loading from "../Loading/Loading";
 import styles from "./PostList.module.scss";
 
+import postsService from "../../services/postsService";
+
 const PostList = ({
     posts = [],
     loading = false,
@@ -13,6 +15,7 @@ const PostList = ({
     onPageChange,
     showPagination = true,
     layout = "grid",
+    maxPosts = 3,
     className,
     ...props
 }) => {
@@ -36,20 +39,33 @@ const PostList = ({
         );
     }
 
+    const handle = async (postId) => {
+        try {
+            await postsService.toggleLikePost(postId);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const displayPosts = posts.slice(0, maxPosts).reverse();
+
     return (
         <div className={`${styles.postList} ${className || ""}`} {...props}>
             <div className={`${styles.postsContainer} ${styles[layout]}`}>
-                {posts.map((post) => (
+                {displayPosts.map((post) => (
                     <div key={post.id || post.slug} className={styles.postItem}>
                         <PostCard
+                            id={post.id}
                             title={post.title}
-                            excerpt={post.excerpt}
-                            author={post.author}
-                            publishedAt={post.publishedAt}
-                            readTime={post.readTime}
-                            topic={post.topic}
+                            excerpt={post.meta_description}
+                            author={post.user}
+                            publishedAt={post.published_at}
+                            readTime={2}
+                            topic={post.topics}
                             slug={post.slug}
-                            featuredImage={post.featuredImage}
+                            featuredImage={post.thumbnail}
+                            isLiked={post?.is_like ? true : false}
+                            onLike={(id, liked) => handle(id, liked)}
                         />
                     </div>
                 ))}
@@ -74,11 +90,8 @@ PostList.propTypes = {
             id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
             title: PropTypes.string.isRequired,
             excerpt: PropTypes.string,
-            author: PropTypes.shape({
-                name: PropTypes.string.isRequired,
-                avatar: PropTypes.string,
-            }).isRequired,
-            publishedAt: PropTypes.string.isRequired,
+            user: PropTypes.shape({}).isRequired,
+            published_at: PropTypes.string.isRequired,
             readTime: PropTypes.number,
             topic: PropTypes.string,
             slug: PropTypes.string.isRequired,
@@ -91,6 +104,7 @@ PostList.propTypes = {
     onPageChange: PropTypes.func,
     showPagination: PropTypes.bool,
     layout: PropTypes.oneOf(["grid", "list"]),
+    maxPosts: PropTypes.number,
     className: PropTypes.string,
 };
 

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Input, Button } from "../../components";
 import styles from "./Register.module.scss";
+import authService from "../../services/authService";
+import { toast } from "react-toastify";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -13,6 +15,7 @@ const Register = () => {
         confirmPassword: "",
         agreeToTerms: false,
     });
+
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -93,9 +96,6 @@ const Register = () => {
         setIsSubmitting(true);
 
         try {
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
             // Mock successful registration
             console.log("Registration successful:", {
                 firstName: formData.firstName,
@@ -103,11 +103,31 @@ const Register = () => {
                 email: formData.email,
             });
 
+            const { email, password, firstName, lastName, ...form } = formData;
+
+            const data = {
+                email,
+                password,
+                first_name: firstName,
+                last_name: lastName,
+                username: email.split("@")[0],
+            };
+
+            console.log(data);
+
+            await authService.register(data);
+
+            toast.success("Registration successful!");
+
             // Navigate to login or welcome page
-            navigate("/login", {
-                replace: true,
-                state: { message: "Registration successful! Please sign in." },
-            });
+            setTimeout(() => {
+                navigate("/login", {
+                    replace: true,
+                    state: {
+                        message: "Registration successful! Please sign in.",
+                    },
+                });
+            }, 3000);
         } catch (error) {
             console.error("Registration failed:", error);
             setErrors({ submit: "Registration failed. Please try again." });

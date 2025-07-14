@@ -5,7 +5,13 @@ import EmptyState from "../EmptyState/EmptyState";
 import FallbackImage from "../FallbackImage/FallbackImage";
 import styles from "./TopicList.module.scss";
 
-const TopicList = ({ topics = [], loading = false, className, ...props }) => {
+const TopicList = ({
+    topics = [],
+    loading = false,
+    className,
+    maxTopics = 3,
+    ...props
+}) => {
     if (loading) {
         return (
             <div
@@ -35,11 +41,12 @@ const TopicList = ({ topics = [], loading = false, className, ...props }) => {
             </div>
         );
     }
+    const displayTopics = topics.slice(0, maxTopics);
 
     return (
         <div className={`${styles.topicList} ${className || ""}`} {...props}>
             <div className={styles.grid}>
-                {topics.map((topic) => (
+                {displayTopics.map((topic) => (
                     <Link
                         key={topic.id}
                         to={`/topics/${topic.slug}`}
@@ -47,19 +54,13 @@ const TopicList = ({ topics = [], loading = false, className, ...props }) => {
                     >
                         <div className={styles.cardContent}>
                             {/* Topic Icon/Image */}
-                            {topic.icon && (
+                            {topic.image && (
                                 <div className={styles.iconContainer}>
-                                    {typeof topic.icon === "string" ? (
-                                        <span className={styles.emoji}>
-                                            {topic.icon}
-                                        </span>
-                                    ) : (
-                                        <FallbackImage
-                                            src={topic.icon}
-                                            alt={topic.name}
-                                            className={styles.image}
-                                        />
-                                    )}
+                                    <FallbackImage
+                                        src={topic.image}
+                                        alt={topic.name}
+                                        className={styles.image}
+                                    />
                                 </div>
                             )}
 
@@ -76,7 +77,7 @@ const TopicList = ({ topics = [], loading = false, className, ...props }) => {
                             {/* Post Count */}
                             <div className={styles.meta}>
                                 <Badge variant="secondary" size="sm">
-                                    {topic.postCount || 0} posts
+                                    {topic.posts_count || 0} posts
                                 </Badge>
                             </div>
                         </div>
@@ -101,6 +102,7 @@ TopicList.propTypes = {
     ),
     loading: PropTypes.bool,
     className: PropTypes.string,
+    maxTopics: PropTypes.number,
 };
 
 export default TopicList;

@@ -5,6 +5,7 @@ import Button from "../Button/Button";
 import FallbackImage from "../FallbackImage/FallbackImage";
 import NotificationDropdown from "../NotificationDropdown/NotificationDropdown";
 import styles from "./Header.module.scss";
+import useUser from "../../hook/useUser";
 
 const Header = () => {
     // Mock authentication state - trong thực tế sẽ từ context/store
@@ -16,14 +17,14 @@ const Header = () => {
     const dropdownRef = useRef(null);
     const notificationRef = useRef(null);
 
-    // Mock user data
-    const mockUser = {
-        name: "John Doe",
-        username: "john-doe",
-        email: "john.doe@example.com",
-        avatar: "https://via.placeholder.com/40?text=JD",
-        role: "Author",
-    };
+    const { currentUser } = useUser();
+
+    useEffect(() => {
+        if (currentUser) {
+            setIsAuthenticated(true);
+            setUser(currentUser.data);
+        }
+    }, [currentUser]);
 
     // Mock notifications data
     const mockNotifications = [
@@ -68,7 +69,6 @@ const Header = () => {
     // Toggle auth state for demo (remove in production)
     const toggleAuth = () => {
         setIsAuthenticated(!isAuthenticated);
-        setUser(isAuthenticated ? null : mockUser);
         setIsDropdownOpen(false);
     };
 
