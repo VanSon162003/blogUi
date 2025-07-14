@@ -3,7 +3,6 @@ import PostCard from "../PostCard/PostCard";
 import EmptyState from "../EmptyState/EmptyState";
 import Loading from "../Loading/Loading";
 import styles from "./FeaturedPosts.module.scss";
-import useUser from "../../hook/useUser";
 import postsService from "../../services/postsService";
 
 const FeaturedPosts = ({
@@ -15,8 +14,6 @@ const FeaturedPosts = ({
     className,
     ...props
 }) => {
-    const { currentUser: user } = useUser();
-
     if (loading) {
         return (
             <section
@@ -45,11 +42,19 @@ const FeaturedPosts = ({
         );
     }
 
-    const handle = async (postId) => {
+    const handleLike = async (postId) => {
         console.log(postId);
 
         try {
             await postsService.toggleLikePost(postId);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const handleBookmark = async (postId) => {
+        try {
+            await postsService.toggleBookmarkPost(postId);
         } catch (error) {
             console.log(error);
         }
@@ -82,8 +87,12 @@ const FeaturedPosts = ({
                             topic={post.topics.name}
                             slug={post.slug}
                             featuredImage={post.thumbnail}
-                            isLiked={post?.is_like ? true : false}
-                            onLike={(id, liked) => handle(id, liked)}
+                            isLiked={post?.is_like || false}
+                            onLike={(id, liked) => handleLike(id, liked)}
+                            onBookmark={(id, liked) =>
+                                handleBookmark(id, liked)
+                            }
+                            isBookmarked={post?.is_bookmark || false}
                         />
                     </div>
                 ))}

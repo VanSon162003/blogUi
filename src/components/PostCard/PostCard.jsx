@@ -77,7 +77,7 @@ const PostCard = ({
         setOptimisticBookmarked(!optimisticBookmarked);
 
         try {
-            await onBookmark(slug, !optimisticBookmarked);
+            await onBookmark(id, !optimisticBookmarked);
         } catch (error) {
             // Revert on error
             setOptimisticBookmarked(optimisticBookmarked);

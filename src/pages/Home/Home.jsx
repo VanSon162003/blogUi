@@ -221,7 +221,7 @@ const Home = () => {
                         </p>
                     </div>
                     <PostList
-                        maxPosts={6}
+                        maxPosts={20}
                         posts={posts}
                         loading={loading}
                         showPagination={false}

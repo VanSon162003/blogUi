@@ -30,13 +30,13 @@ const TopicHeader = ({ topic, loading = false, className, ...props }) => {
         <div className={`${styles.topicHeader} ${className || ""}`} {...props}>
             <div className={styles.content}>
                 {/* Topic Icon */}
-                {topic.icon && (
+                {topic.image && (
                     <div className={styles.iconContainer}>
                         {typeof topic.icon === "string" ? (
                             <span className={styles.emoji}>{topic.icon}</span>
                         ) : (
                             <FallbackImage
-                                src={topic.icon}
+                                src={topic.image}
                                 alt={topic.name}
                                 className={styles.image}
                             />

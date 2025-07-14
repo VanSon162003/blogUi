@@ -39,9 +39,21 @@ const PostList = ({
         );
     }
 
-    const handle = async (postId) => {
+    const handleLike = async (postId) => {
+        console.log(postId);
+
         try {
-            await postsService.toggleLikePost(postId);
+            const test = await postsService.toggleLikePost(postId);
+
+            console.log(test);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const handleBookmark = async (postId) => {
+        try {
+            await postsService.toggleBookmarkPost(postId);
         } catch (error) {
             console.log(error);
         }
@@ -65,7 +77,11 @@ const PostList = ({
                             slug={post.slug}
                             featuredImage={post.thumbnail}
                             isLiked={post?.is_like ? true : false}
-                            onLike={(id, liked) => handle(id, liked)}
+                            onLike={(id, liked) => handleLike(id, liked)}
+                            onBookmark={(id, liked) =>
+                                handleBookmark(id, liked)
+                            }
+                            isBookmarked={post?.is_bookmark || false}
                         />
                     </div>
                 ))}

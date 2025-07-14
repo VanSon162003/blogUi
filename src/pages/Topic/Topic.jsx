@@ -5,6 +5,8 @@ import PostList from "../../components/PostList/PostList";
 import EmptyState from "../../components/EmptyState/EmptyState";
 import Loading from "../../components/Loading/Loading";
 import styles from "./Topic.module.scss";
+import topicsService from "../../services/topicsService";
+import postsService from "../../services/postsService";
 
 const Topic = () => {
     const { slug } = useParams();
@@ -22,74 +24,32 @@ const Topic = () => {
     const [totalPages, setTotalPages] = useState(1);
     const postsPerPage = 10;
 
-    // Mock data - replace with actual API calls
-    const mockTopics = {
-        javascript: {
-            id: 1,
-            name: "JavaScript",
-            slug: "javascript",
-            description:
-                "Everything about JavaScript programming language, frameworks, and best practices.",
-            icon: "🚀",
-            postCount: 45,
-            createdAt: "2023-01-15",
-        },
-        react: {
-            id: 2,
-            name: "React",
-            slug: "react",
-            description:
-                "React.js tutorials, tips, and advanced patterns for building modern web applications.",
-            icon: "⚛️",
-            postCount: 32,
-            createdAt: "2023-02-10",
-        },
-        nodejs: {
-            id: 3,
-            name: "Node.js",
-            slug: "nodejs",
-            description:
-                "Server-side JavaScript development with Node.js and its ecosystem.",
-            icon: "🟢",
-            postCount: 28,
-            createdAt: "2023-01-20",
-        },
-        css: {
-            id: 4,
-            name: "CSS",
-            slug: "css",
-            description:
-                "Modern CSS techniques, animations, and responsive design patterns.",
-            icon: "🎨",
-            postCount: 23,
-            createdAt: "2023-03-05",
-        },
-    };
+    // const generateMockPosts = (topicName, page = 1) => {
+    //     const posts = [];
+    //     const startIndex = (page - 1) * postsPerPage;
 
-    const generateMockPosts = (topicName, page = 1) => {
-        const posts = [];
-        const startIndex = (page - 1) * postsPerPage;
+    //     for (let i = 1; i <= postsPerPage; i++) {
+    //         const postIndex = startIndex + i;
+    //         posts.push({
+    //             id: `${slug}-${postIndex}`,
+    //             title: `${topicName} Tutorial ${postIndex}: Advanced Concepts and Best Practices`,
+    //             excerpt: `Learn advanced ${topicName} concepts in this comprehensive tutorial. We'll cover important topics, best practices, and real-world examples that will help you become a better developer.`,
+    //             slug: `${slug}-tutorial-${postIndex}`,
+    //             user: {
+    //                 name: "John Doe",
+    //                 avatar: `https://via.placeholder.com/32?text=JD`,
+    //                 first_name: "ss",
+    //                 last_name: "sád",
+    //             },
+    //             published_at: new Date(2024, 0, postIndex).toISOString(),
+    //             readTime: Math.floor(Math.random() * 10) + 3,
+    //             topic: topicName,
+    //             featuredImage: `https://via.placeholder.com/400x200?text=${topicName}+${postIndex}`,
+    //         });
+    //     }
 
-        for (let i = 1; i <= postsPerPage; i++) {
-            const postIndex = startIndex + i;
-            posts.push({
-                id: `${slug}-${postIndex}`,
-                title: `${topicName} Tutorial ${postIndex}: Advanced Concepts and Best Practices`,
-                excerpt: `Learn advanced ${topicName} concepts in this comprehensive tutorial. We'll cover important topics, best practices, and real-world examples that will help you become a better developer.`,
-                slug: `${slug}-tutorial-${postIndex}`,
-                author: {
-                    name: "John Doe",
-                    avatar: `https://via.placeholder.com/32?text=JD`,
-                },
-                publishedAt: new Date(2024, 0, postIndex).toISOString(),
-                readTime: Math.floor(Math.random() * 10) + 3,
-                topic: topicName,
-                featuredImage: `https://via.placeholder.com/400x200?text=${topicName}+${postIndex}`,
-            });
-        }
-
-        return posts;
-    };
+    //     return posts;
+    // };
 
     // Fetch topic data
     useEffect(() => {
@@ -99,18 +59,18 @@ const Topic = () => {
 
             try {
                 // Simulate API delay
-                await new Promise((resolve) => setTimeout(resolve, 500));
 
-                const topicData = mockTopics[slug];
-                if (!topicData) {
+                const { data } = await topicsService.getBySlug(slug);
+
+                if (!data) {
                     setError("Topic not found");
                     return;
                 }
 
-                setTopic(topicData);
+                setTopic(data);
 
                 // Calculate total pages
-                const totalPostsCount = topicData.postCount;
+                const totalPostsCount = data.postCount;
                 setTotalPages(Math.ceil(totalPostsCount / postsPerPage));
             } catch (err) {
                 setError("Failed to load topic");
@@ -133,10 +93,10 @@ const Topic = () => {
 
             try {
                 // Simulate API delay
-                await new Promise((resolve) => setTimeout(resolve, 300));
 
-                const mockPosts = generateMockPosts(topic.name, currentPage);
-                setPosts(mockPosts);
+                const mockPosts = await postsService.getListByTopicId(topic.id);
+
+                setPosts(mockPosts.data);
             } catch (err) {
                 console.error("Failed to load posts:", err);
             } finally {
@@ -185,6 +145,7 @@ const Topic = () => {
 
                 {/* Posts List */}
                 <PostList
+                    maxPosts={posts.length}
                     posts={posts}
                     loading={postsLoading}
                     currentPage={currentPage}
