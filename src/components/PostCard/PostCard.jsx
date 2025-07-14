@@ -20,8 +20,8 @@ const PostCard = ({
     compact = false,
     className,
     // New interaction props
-    likes = 0,
-    views = 0,
+    likes = 10,
+    views = 100,
     isLiked = false,
     isBookmarked = false,
     showViewCount = true,

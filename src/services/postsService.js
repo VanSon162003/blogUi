@@ -10,6 +10,11 @@ export const getListByTopicId = async (topicId) => {
     return result;
 };
 
+export const getListByUserBookmarks = async () => {
+    const result = await httpRequest.get(`/posts/user/bookmarks`);
+    return result;
+};
+
 export const toggleLikePost = async (id) => {
     const result = await httpRequest.post(`/posts/${id}/like`);
     return result;
@@ -25,4 +30,5 @@ export default {
     toggleLikePost,
     toggleBookmarkPost,
     getListByTopicId,
+    getListByUserBookmarks,
 };
