@@ -1,4 +1,3 @@
-import { data } from "react-router-dom";
 import httpRequest from "../utils/httpRequest";
 
 export const register = async (data) => {
@@ -7,14 +6,9 @@ export const register = async (data) => {
 };
 
 export const login = async (data) => {
-    try {
-        const result = await httpRequest.post("/auth/login", data);
+    const result = await httpRequest.post("/auth/login", data);
 
-        return result;
-    } catch (error) {
-        console.log(error);
-        throw new Error("Thông tin đăng nhập không hợp lệ.");
-    }
+    return result;
 };
 
 export const forgotPassword = async (data) => {
@@ -28,27 +22,15 @@ export const forgotPassword = async (data) => {
 };
 
 export const verifyEmail = async (token) => {
-    try {
-        const result = await httpRequest.post(
-            `/auth/verify-email?token=${token}`
-        );
+    const result = await httpRequest.post(`/auth/verify-email?token=${token}`);
 
-        return result;
-    } catch (error) {
-        throw new Error(error);
-    }
+    return result;
 };
 
 export const verifyToken = async (token) => {
-    try {
-        const result = await httpRequest.get(
-            `/auth/verify-token?token=${token}`
-        );
+    const result = await httpRequest.get(`/auth/verify-token?token=${token}`);
 
-        return result;
-    } catch (error) {
-        throw new Error(error);
-    }
+    return result;
 };
 
 export const getUser = async () => {

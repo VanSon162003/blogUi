@@ -8,190 +8,11 @@ import {
     Loading,
 } from "../../components";
 import styles from "./BlogDetail.module.scss";
+import postsService from "../../services/postsService";
+import usersService from "../../services/usersService";
+import useUser from "../../hook/useUser";
 
-// Mock data for demonstration
-const mockBlogPost = {
-    id: 1,
-    title: "Understanding React Hooks: A Comprehensive Guide",
-    content: `
-    <p>React Hooks have revolutionized the way we write React components. They allow us to use state and other React features without writing a class component.</p>
-    
-    <h2>What are React Hooks?</h2>
-    <p>Hooks are functions that let you "hook into" React state and lifecycle features from function components. They don't work inside classes — they let you use React without classes.</p>
-    
-    <h3>The most commonly used hooks include:</h3>
-    <ul>
-      <li><strong>useState</strong> - For adding state to functional components</li>
-      <li><strong>useEffect</strong> - For performing side effects</li>
-      <li><strong>useContext</strong> - For consuming context values</li>
-      <li><strong>useReducer</strong> - For complex state management</li>
-      <li><strong>useMemo</strong> - For memoizing expensive calculations</li>
-      <li><strong>useCallback</strong> - For memoizing functions</li>
-    </ul>
-    
-    <h2>useState Hook</h2>
-    <p>The useState hook is the most basic hook. It allows you to add state to functional components:</p>
-    
-    <pre><code>import React, { useState } from 'react';
-
-function Counter() {
-  const [count, setCount] = useState(0);
-
-  return (
-    &lt;div&gt;
-      &lt;p&gt;You clicked {count} times&lt;/p&gt;
-      &lt;button onClick={() =&gt; setCount(count + 1)}&gt;
-        Click me
-      &lt;/button&gt;
-    &lt;/div&gt;
-  );
-}</code></pre>
-    
-    <h2>useEffect Hook</h2>
-    <p>The useEffect hook lets you perform side effects in function components. It serves the same purpose as componentDidMount, componentDidUpdate, and componentWillUnmount combined in React classes.</p>
-    
-    <blockquote>
-      <p>Remember: React will run the effects after every render — including the first render.</p>
-    </blockquote>
-    
-    <h2>Best Practices</h2>
-    <p>When using React Hooks, keep these best practices in mind:</p>
-    <ul>
-      <li>Only call hooks at the top level of your React function</li>
-      <li>Don't call hooks inside loops, conditions, or nested functions</li>
-      <li>Use the ESLint plugin for hooks to catch mistakes</li>
-      <li>Extract custom hooks for reusable logic</li>
-    </ul>
-    
-    <p>React Hooks provide a more direct API to the React concepts you already know. They offer a powerful and expressive way to write React components while keeping them simple and easy to understand.</p>
-  `,
-    author: {
-        name: "John Smith",
-        title: "Senior Frontend Developer",
-        bio: "Passionate about React, JavaScript, and modern web development. I love sharing knowledge and helping developers build amazing user experiences.",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-        social: {
-            twitter: "https://twitter.com/johnsmith",
-            github: "https://github.com/johnsmith",
-            linkedin: "https://linkedin.com/in/johnsmith",
-            website: "https://johnsmith.dev",
-        },
-        postsCount: 24,
-        followers: 1250,
-        following: 180,
-    },
-    publishedAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-16T14:20:00Z",
-    readTime: 8,
-    topic: "React",
-    tags: ["React", "JavaScript", "Frontend", "Hooks", "Web Development"],
-    featuredImage:
-        "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=400&fit=crop",
-};
-
-const mockRelatedPosts = [
-    {
-        id: 2,
-        title: "Advanced React Patterns You Should Know",
-        excerpt:
-            "Explore advanced React patterns including render props, higher-order components, and compound components.",
-        featuredImage:
-            "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop",
-        author: {
-            name: "Sarah Wilson",
-            avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-        },
-        publishedAt: "2024-01-12T09:15:00Z",
-        readTime: 12,
-        topic: "React",
-    },
-    {
-        id: 3,
-        title: "State Management in React: Context vs Redux",
-        excerpt:
-            "Compare different state management solutions and learn when to use each approach in your React applications.",
-        featuredImage:
-            "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=250&fit=crop",
-        author: {
-            name: "Mike Chen",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-        },
-        publishedAt: "2024-01-10T16:45:00Z",
-        readTime: 10,
-        topic: "React",
-    },
-    {
-        id: 4,
-        title: "Building Responsive Components with CSS-in-JS",
-        excerpt:
-            "Learn how to create responsive and maintainable React components using modern CSS-in-JS libraries.",
-        featuredImage:
-            "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=400&h=250&fit=crop",
-        author: {
-            name: "Emily Davis",
-            avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-        },
-        publishedAt: "2024-01-08T11:20:00Z",
-        readTime: 7,
-        topic: "CSS",
-    },
-];
-
-const mockComments = [
-    {
-        id: 1,
-        author: {
-            name: "Alex Rodriguez",
-            avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
-        },
-        content:
-            "Great article! I've been using React Hooks for a while now, and this guide really helps clarify some of the more advanced concepts. The useState examples are particularly helpful for beginners.",
-        createdAt: "2024-01-15T14:30:00Z",
-        likes: 12,
-        isLiked: false,
-        replies: [
-            {
-                id: 2,
-                author: {
-                    name: "John Smith",
-                    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-                },
-                content:
-                    "Thank you! I'm glad you found it helpful. I'll be writing more about advanced hook patterns soon.",
-                createdAt: "2024-01-15T15:45:00Z",
-                likes: 5,
-                isLiked: true,
-                replies: [],
-            },
-        ],
-    },
-    {
-        id: 3,
-        author: {
-            name: "Lisa Park",
-            avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-        },
-        content:
-            "Could you write a follow-up article about custom hooks? I'm still struggling with when and how to create them effectively.",
-        createdAt: "2024-01-15T16:20:00Z",
-        likes: 8,
-        isLiked: false,
-        replies: [],
-    },
-    {
-        id: 4,
-        author: {
-            name: "David Kim",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-        },
-        content:
-            "The useEffect explanation is spot on. I wish I had this guide when I was first learning React Hooks. The best practices section is golden!",
-        createdAt: "2024-01-15T18:10:00Z",
-        likes: 15,
-        isLiked: true,
-        replies: [],
-    },
-];
+import commentsService from "../../services/commentsService";
 
 const BlogDetail = () => {
     const { slug } = useParams();
@@ -199,15 +20,18 @@ const BlogDetail = () => {
     const [post, setPost] = useState(null);
     const [relatedPosts, setRelatedPosts] = useState([]);
     const [comments, setComments] = useState([]);
-    const [isAuthenticated] = useState(true); // Mock authentication
+    const [isAuthenticated, setIsAuthenticated] = useState(false); // Mock authentication
 
     // Like and bookmark states
     const [isLiked, setIsLiked] = useState(false);
     const [isBookmarked, setIsBookmarked] = useState(false);
     const [likes, setLikes] = useState(45); // Mock initial likes
-    const [views] = useState(892); // Mock views
+    const [views, setViews] = useState(892); // Mock views
     const [likingInProgress, setLikingInProgress] = useState(false);
     const [bookmarkingInProgress, setBookmarkingInProgress] = useState(false);
+    const [follow, setFollow] = useState(false);
+
+    const { currentUser } = useUser();
 
     useEffect(() => {
         // Simulate API call
@@ -215,11 +39,14 @@ const BlogDetail = () => {
             setLoading(true);
             try {
                 // Simulate loading delay
-                await new Promise((resolve) => setTimeout(resolve, 1000));
+                const { data: post } = await postsService.getBySlug(slug);
 
-                setPost(mockBlogPost);
-                setRelatedPosts(mockRelatedPosts);
-                setComments(mockComments);
+                setLikes(post[0].likes_count);
+                setViews(post[0].views_count);
+                setIsLiked(post[0].is_like);
+                setIsBookmarked(post[0].is_bookmark);
+
+                setPost(post[0]);
             } catch (error) {
                 console.error("Failed to load post:", error);
             } finally {
@@ -230,75 +57,148 @@ const BlogDetail = () => {
         loadPost();
     }, [slug]);
 
+    useEffect(() => {
+        if (currentUser?.data) {
+            return setIsAuthenticated(true);
+        }
+
+        setIsAuthenticated(false);
+    }, [currentUser?.data]);
+
+    useEffect(() => {
+        try {
+            (async () => {
+                const result = await commentsService.getAllByPostId(post?.id);
+                setComments(result.reverse());
+            })();
+        } catch (error) {
+            console.log(error);
+        }
+    }, [post?.id]);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const result = await usersService.checkFollower(post?.user.id);
+
+                setFollow(result.data);
+            } catch (error) {
+                console.log(error);
+            }
+        })();
+    }, [post?.user.id]);
+
+    useEffect(() => {
+        (async () => {
+            const postRelates = await postsService.getPostsRelate(post?.id);
+            setRelatedPosts(postRelates.data);
+        })();
+    }, [post?.id]);
+
     const handleAddComment = async (content) => {
         // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        const data = {
+            post_id: post.id,
+            content,
+        };
+
+        const { data: result } = await commentsService.create(data);
 
         const newComment = {
-            id: Date.now(),
-            author: {
-                name: "You",
-                avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
-            },
-            content,
-            createdAt: new Date().toISOString(),
-            likes: 0,
-            isLiked: false,
-            replies: [],
+            ...result,
+            created_at: result.createdAt,
+            updated_at: result.updatedAt,
         };
 
         setComments((prev) => [newComment, ...prev]);
     };
 
     const handleReplyComment = async (parentId, content) => {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Tìm comment cấp 1 chứa parentId này
+        let topLevelParentId = parentId;
 
-        const newReply = {
-            id: Date.now(),
-            author: {
-                name: "You",
-                avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
-            },
+        for (const comment of comments) {
+            if (comment.id === parentId) {
+                // Reply vào comment cấp 1 → giữ nguyên
+                break;
+            }
+
+            // Nếu comment.replies chứa comment có id === parentId
+            if (
+                comment.replies &&
+                comment.replies.some((reply) => reply.id === parentId)
+            ) {
+                topLevelParentId = comment.id; // chuyển về cấp 1
+                break;
+            }
+        }
+
+        const data = {
+            post_id: post.id,
             content,
-            createdAt: new Date().toISOString(),
-            likes: 0,
-            isLiked: false,
-            replies: [],
+            parent_id: topLevelParentId,
+        };
+
+        const { data: result } = await commentsService.create(data);
+
+        const newComment = {
+            ...result,
+            created_at: result.createdAt,
+            updated_at: result.updatedAt,
         };
 
         setComments((prev) =>
             prev.map((comment) =>
-                comment.id === parentId
-                    ? { ...comment, replies: [...comment.replies, newReply] }
+                comment.id === topLevelParentId
+                    ? { ...comment, replies: [...comment.replies, newComment] }
                     : comment
             )
         );
     };
 
     const handleLikeComment = async (commentId) => {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 200));
-
+        await commentsService.toggleLike(commentId);
         setComments((prev) =>
-            prev.map((comment) =>
-                comment.id === commentId
-                    ? {
-                          ...comment,
-                          isLiked: !comment.isLiked,
-                          likes: comment.isLiked
-                              ? comment.likes - 1
-                              : comment.likes + 1,
-                      }
-                    : comment
-            )
+            prev.map((comment) => {
+                if (comment.id === commentId) {
+                    return {
+                        ...comment,
+                        is_like: !comment.is_like,
+                        like_count: comment.is_like
+                            ? comment.like_count - 1
+                            : comment.like_count + 1,
+                    };
+                }
+
+                if (comment.replies && comment.replies.length > 0) {
+                    const updatedReplies = comment.replies.map((reply) => {
+                        if (reply.id === commentId) {
+                            return {
+                                ...reply,
+                                is_like: !reply.is_like,
+                                like_count: reply.is_like
+                                    ? reply.like_count - 1
+                                    : reply.like_count + 1,
+                            };
+                        }
+                        return reply;
+                    });
+
+                    return { ...comment, replies: updatedReplies };
+                }
+
+                return comment;
+            })
         );
     };
 
     const handleEditComment = async (commentId, newContent) => {
         try {
             // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            await commentsService.update(commentId, {
+                content: newContent,
+            });
 
             const updateCommentRecursively = (comments) => {
                 return comments.map((comment) => {
@@ -329,7 +229,10 @@ const BlogDetail = () => {
     const handleDeleteComment = async (commentId) => {
         try {
             // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            await commentsService.update(commentId, {
+                deleted_at: Date.now(),
+            });
 
             const deleteCommentRecursively = (comments) => {
                 return comments
@@ -366,7 +269,7 @@ const BlogDetail = () => {
 
         try {
             // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            await postsService.toggleLikePost(post?.id);
             console.log("Post like toggled:", !isLiked);
         } catch (error) {
             // Revert on error
@@ -388,7 +291,7 @@ const BlogDetail = () => {
 
         try {
             // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            await postsService.toggleBookmarkPost(post?.id);
             console.log("Post bookmark toggled:", !isBookmarked);
         } catch (error) {
             // Revert on error
@@ -520,7 +423,7 @@ const BlogDetail = () => {
 
             {/* Author Info */}
             <div className={styles.authorSection}>
-                <AuthorInfo author={post.author} />
+                <AuthorInfo follow={follow} user={post.user} />
             </div>
 
             {/* Related Posts */}

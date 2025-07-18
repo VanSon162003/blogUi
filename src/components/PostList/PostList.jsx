@@ -40,22 +40,18 @@ const PostList = ({
     }
 
     const handleLike = async (postId) => {
-        console.log(postId);
-
         try {
-            const test = await postsService.toggleLikePost(postId);
-
-            console.log(test);
+            return await postsService.toggleLikePost(postId);
         } catch (error) {
-            console.log(error);
+            throw new Error(error);
         }
     };
 
     const handleBookmark = async (postId) => {
         try {
-            await postsService.toggleBookmarkPost(postId);
+            return await postsService.toggleBookmarkPost(postId);
         } catch (error) {
-            console.log(error);
+            throw new Error(error);
         }
     };
 
@@ -68,10 +64,12 @@ const PostList = ({
                     <div key={post.id || post.slug} className={styles.postItem}>
                         <PostCard
                             id={post.id}
+                            likes={post.likes_count}
+                            views={post.views_count}
                             title={post.title}
                             excerpt={post.meta_description}
-                            author={post.user}
-                            publishedAt={post.published_at}
+                            user={post.user}
+                            published_at={post.published_at}
                             readTime={2}
                             topic={post.topics}
                             slug={post.slug}

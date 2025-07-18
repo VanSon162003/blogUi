@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import Badge from "../Badge/Badge";
@@ -7,15 +9,19 @@ import styles from "./BlogContent.module.scss";
 const BlogContent = ({
     title,
     content,
-    author,
-    publishedAt,
+    user,
+    published_at,
     updatedAt,
+    createdAt,
     readTime,
-    topic,
+    topics = [],
     tags = [],
-    featuredImage,
+    thumbnail,
     loading = false,
     className,
+    usersBookmarked = [],
+    is_like = false,
+    is_bookmark = false,
     ...props
 }) => {
     const formatDate = (dateString) => {
@@ -55,10 +61,10 @@ const BlogContent = ({
             {...props}
         >
             {/* Featured Image */}
-            {featuredImage && (
+            {thumbnail && (
                 <div className={styles.imageContainer}>
                     <FallbackImage
-                        src={featuredImage}
+                        src={thumbnail}
                         alt={title}
                         className={styles.featuredImage}
                     />
@@ -68,13 +74,16 @@ const BlogContent = ({
             {/* Article Header */}
             <header className={styles.header}>
                 {/* Topic Badge */}
-                {topic && (
-                    <div className={styles.topicBadge}>
-                        <Badge variant="primary" size="md">
-                            {topic}
-                        </Badge>
-                    </div>
-                )}
+                {topics &&
+                    topics.map((topic) => {
+                        return (
+                            <div key={topic.id} className={styles.topicBadge}>
+                                <Badge variant="primary" size="md">
+                                    {topic.name}
+                                </Badge>
+                            </div>
+                        );
+                    })}
 
                 {/* Title */}
                 <h1 className={styles.title}>{title}</h1>
@@ -82,33 +91,33 @@ const BlogContent = ({
                 {/* Meta Information */}
                 <div className={styles.meta}>
                     <div className={styles.author}>
-                        {author?.avatar && (
+                        {user?.avatar && (
                             <FallbackImage
-                                src={author.avatar}
-                                alt={author.name}
+                                src={user.avatar}
+                                alt={user.username}
                                 className={styles.authorAvatar}
                             />
                         )}
                         <div className={styles.authorInfo}>
                             <Link
                                 to={`/profile/${
-                                    author?.username ||
-                                    author?.name
+                                    user?.username ||
+                                    user?.first_name
                                         ?.toLowerCase()
                                         .replace(/\s+/g, "-")
                                 }`}
                                 className={styles.authorName}
                             >
-                                {author?.name}
+                                {user?.first_name}
                             </Link>
                             <div className={styles.dateInfo}>
                                 <time
-                                    dateTime={publishedAt}
+                                    dateTime={published_at}
                                     className={styles.publishDate}
                                 >
-                                    {formatDate(publishedAt)}
+                                    {formatDate(published_at)}
                                 </time>
-                                {updatedAt && updatedAt !== publishedAt && (
+                                {updatedAt && updatedAt !== published_at && (
                                     <span className={styles.updateInfo}>
                                         • Updated {formatDate(updatedAt)}
                                     </span>
@@ -148,7 +157,7 @@ const BlogContent = ({
                                     variant="secondary"
                                     size="sm"
                                 >
-                                    {tag}
+                                    {tag.name}
                                 </Badge>
                             ))}
                         </div>
@@ -162,19 +171,23 @@ const BlogContent = ({
 BlogContent.propTypes = {
     title: PropTypes.string.isRequired,
     content: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
-    author: PropTypes.shape({
-        name: PropTypes.string.isRequired,
+    user: PropTypes.shape({
+        first_name: PropTypes.string.isRequired,
         avatar: PropTypes.string,
         username: PropTypes.string,
     }).isRequired,
-    publishedAt: PropTypes.string.isRequired,
+    published_at: PropTypes.string.isRequired,
     updatedAt: PropTypes.string,
+    createdAt: PropTypes.string,
     readTime: PropTypes.number,
-    topic: PropTypes.string,
-    tags: PropTypes.arrayOf(PropTypes.string),
-    featuredImage: PropTypes.string,
+    topics: PropTypes.array,
+    tags: PropTypes.arrayOf(PropTypes.object),
+    thumbnail: PropTypes.string,
     loading: PropTypes.bool,
     className: PropTypes.string,
+    usersbookmarked: PropTypes.array,
+    is_like: PropTypes.bool,
+    is_bookmark: PropTypes.bool,
 };
 
 export default BlogContent;

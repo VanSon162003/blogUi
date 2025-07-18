@@ -75,8 +75,7 @@ const Login = () => {
             // Navigate to home or dashboard
             navigate("/", { replace: true });
         } catch (error) {
-            console.error("Login failed:", error);
-            setErrors({ submit: "Login failed. Please try again." });
+            setErrors({ submit: error });
         } finally {
             setIsSubmitting(false);
         }

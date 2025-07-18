@@ -43,20 +43,18 @@ const FeaturedPosts = ({
     }
 
     const handleLike = async (postId) => {
-        console.log(postId);
-
         try {
-            await postsService.toggleLikePost(postId);
+            return await postsService.toggleLikePost(postId);
         } catch (error) {
-            console.log(error);
+            throw new Error(error);
         }
     };
 
     const handleBookmark = async (postId) => {
         try {
-            await postsService.toggleBookmarkPost(postId);
+            return await postsService.toggleBookmarkPost(postId);
         } catch (error) {
-            console.log(error);
+            throw new Error(error);
         }
     };
 
@@ -79,10 +77,12 @@ const FeaturedPosts = ({
                     >
                         <PostCard
                             id={post.id}
+                            likes={post.likes_count}
+                            views={post.views_count}
                             title={post.title}
                             excerpt={post.meta_description}
-                            author={post.user}
-                            publishedAt={post.published_at}
+                            user={post.user}
+                            published_at={post.published_at}
                             readTime={2}
                             topic={post.topics.name}
                             slug={post.slug}

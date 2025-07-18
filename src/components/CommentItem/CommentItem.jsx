@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState, useRef, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
@@ -25,15 +26,20 @@ const CommentItem = ({
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const dropdownRef = useRef(null);
 
+    const updatedAt = new Date(comment?.updated_at);
+    const createdAt = new Date(comment?.created_at);
+
+    const isEdit = updatedAt.getTime() !== createdAt.getTime();
+
     const {
         id,
-        author,
+        user,
         content,
-        createdAt,
-        likes = 0,
-        isLiked = false,
+        created_at,
+        like_count = 0,
+        is_like = false,
         replies = [],
-        isEdited = false,
+        isEdited = isEdit,
     } = comment;
 
     // Close dropdown when clicking outside
@@ -132,7 +138,7 @@ const CommentItem = ({
             <div className={styles.comment}>
                 {/* Avatar */}
                 <div className={styles.avatar}>
-                    <FallbackImage src={author.avatar} alt={author.name} />
+                    <FallbackImage src={user.avatar} alt={user.username} />
                 </div>
 
                 {/* Content */}
@@ -142,17 +148,17 @@ const CommentItem = ({
                         <div className={styles.info}>
                             <Link
                                 to={`/profile/${
-                                    author?.username ||
-                                    author?.name
+                                    user?.username ||
+                                    user?.username
                                         ?.toLowerCase()
                                         .replace(/\s+/g, "-")
                                 }`}
                                 className={styles.authorName}
                             >
-                                {author.name}
+                                {`${user.first_name} ${user.last_name}`}
                             </Link>
-                            <time className={styles.date} dateTime={createdAt}>
-                                {formatDate(createdAt)}
+                            <time className={styles.date} dateTime={created_at}>
+                                {formatDate(created_at)}
                             </time>
                             {isEdited && (
                                 <span className={styles.edited}>(edited)</span>
@@ -244,7 +250,7 @@ const CommentItem = ({
                         <div className={styles.actions}>
                             <button
                                 className={`${styles.likeButton} ${
-                                    isLiked ? styles.liked : ""
+                                    is_like ? styles.liked : ""
                                 }`}
                                 onClick={handleLike}
                                 type="button"
@@ -257,7 +263,7 @@ const CommentItem = ({
                                 >
                                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                                 </svg>
-                                {likes > 0 && <span>{likes}</span>}
+                                {like_count > 0 && <span>{like_count}</span>}
                             </button>
 
                             {level < maxLevel && (
@@ -407,15 +413,15 @@ CommentItem.propTypes = {
     comment: PropTypes.shape({
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
             .isRequired,
-        author: PropTypes.shape({
-            name: PropTypes.string.isRequired,
-            avatar: PropTypes.string.isRequired,
-            username: PropTypes.string,
+        user: PropTypes.shape({
+            first_name: PropTypes.string.isRequired,
+            last_name: PropTypes.string.isRequired,
+            avatar: PropTypes.string,
         }).isRequired,
         content: PropTypes.string.isRequired,
-        createdAt: PropTypes.string.isRequired,
-        likes: PropTypes.number,
-        isLiked: PropTypes.bool,
+        created_at: PropTypes.string.isRequired,
+        like_count: PropTypes.number,
+        is_like: PropTypes.bool,
         replies: PropTypes.array,
         isEdited: PropTypes.bool,
     }).isRequired,

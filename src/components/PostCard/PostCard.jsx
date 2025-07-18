@@ -5,15 +5,16 @@ import Card from "../Card/Card";
 import Badge from "../Badge/Badge";
 import FallbackImage from "../FallbackImage/FallbackImage";
 import styles from "./PostCard.module.scss";
+import { toast } from "react-toastify";
 
 const PostCard = ({
     id,
     title,
     excerpt,
-    author,
-    publishedAt,
+    user,
+    published_at,
     readTime,
-    topic,
+    topic = [],
     slug,
     featuredImage,
     loading = false,
@@ -48,17 +49,22 @@ const PostCard = ({
     const handleLike = async () => {
         if (!onLike || likingInProgress) return;
 
-        setLikingInProgress(true);
-
         // Optimistic update
-        setOptimisticLiked(!optimisticLiked);
-        setOptimisticLikes(
-            optimisticLiked ? optimisticLikes - 1 : optimisticLikes + 1
-        );
 
         try {
-            await onLike(id, !optimisticLiked);
+            setLikingInProgress(true);
+
+            const check = await onLike(id, !optimisticLiked);
+
+            setOptimisticLiked(!optimisticLiked);
+            setOptimisticLikes(
+                optimisticLiked ? optimisticLikes - 1 : optimisticLikes + 1
+            );
+            if (check.data) toast.success("You liked this post ❤️");
+            else toast.success("You unliked this post 💔");
         } catch (error) {
+            toast.error(error.message);
+
             // Revert on error
             setOptimisticLiked(optimisticLiked);
             setOptimisticLikes(optimisticLikes);
@@ -71,17 +77,22 @@ const PostCard = ({
     const handleBookmark = async () => {
         if (!onBookmark || bookmarkingInProgress) return;
 
-        setBookmarkingInProgress(true);
-
-        // Optimistic update
-        setOptimisticBookmarked(!optimisticBookmarked);
-
         try {
-            await onBookmark(id, !optimisticBookmarked);
+            const check = await onBookmark(id, !optimisticBookmarked);
+
+            setBookmarkingInProgress(true);
+
+            // Optimistic update
+            setOptimisticBookmarked(!optimisticBookmarked);
+            console.log(check);
+
+            if (Array.isArray(check.data))
+                toast.success("You bookmarked this post.");
+            else toast.success("You removed this post from your bookmarks.");
         } catch (error) {
             // Revert on error
             setOptimisticBookmarked(optimisticBookmarked);
-            console.error("Failed to toggle bookmark:", error);
+            toast.error(error.message);
         } finally {
             setBookmarkingInProgress(false);
         }
@@ -158,30 +169,30 @@ const PostCard = ({
                 {/* Meta Information */}
                 <div className={styles.meta}>
                     <div className={styles.author}>
-                        {author?.avatar && (
+                        {user?.avatar && (
                             <FallbackImage
-                                src={author.avatar}
-                                alt={author.name}
+                                src={user.avatar}
+                                alt={user.username}
                                 className={styles.authorAvatar}
                                 lazy={true}
                             />
                         )}
                         <Link
                             to={`/profile/${
-                                author?.username ||
-                                author?.username
+                                user?.username ||
+                                user?.username
                                     ?.toLowerCase()
                                     .replace(/\s+/g, "-")
                             }`}
                             className={styles.authorName}
                         >
-                            {`${author?.first_name} ${author?.last_name}`}
+                            {`${user?.first_name} ${user?.last_name}`}
                         </Link>
                     </div>
 
                     <div className={styles.metaInfo}>
                         <span className={styles.date}>
-                            {formatDate(publishedAt)}
+                            {formatDate(published_at)}
                         </span>
                         {readTime && (
                             <>
@@ -334,13 +345,13 @@ PostCard.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     title: PropTypes.string.isRequired,
     excerpt: PropTypes.string,
-    author: PropTypes.shape({
+    user: PropTypes.shape({
         first_name: PropTypes.string.isRequired,
         last_name: PropTypes.string.isRequired,
         avatar: PropTypes.string,
         username: PropTypes.string,
     }).isRequired,
-    publishedAt: PropTypes.string.isRequired,
+    published_at: PropTypes.string.isRequired,
     readTime: PropTypes.number,
     topic: PropTypes.arrayOf(
         PropTypes.shape({

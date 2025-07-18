@@ -63,7 +63,7 @@ const ForgotPassword = () => {
         } catch (error) {
             console.error("Failed to send reset email:", error);
             setErrors({
-                submit: "Invalid email. Please try again.",
+                submit: error.message,
             });
         } finally {
             setIsSubmitting(false);

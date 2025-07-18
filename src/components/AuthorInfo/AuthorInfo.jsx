@@ -1,18 +1,36 @@
+/* eslint-disable react/prop-types */
+/* eslint-disable no-unused-vars */
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import Button from "../Button/Button";
 import FallbackImage from "../FallbackImage/FallbackImage";
 import styles from "./AuthorInfo.module.scss";
+import { useEffect, useState } from "react";
+import usersService from "../../services/usersService";
 
 const AuthorInfo = ({
-    author,
+    user,
     showSocial = true,
     showBio = true,
     showFollowButton = true,
     loading = false,
+    follow = false,
     className,
     ...props
 }) => {
+    const [isFollow, setIsFollow] = useState(follow);
+    const [followerCount, setFollowerCount] = useState(
+        user.follower_count || 0
+    );
+
+    useEffect(() => {
+        setIsFollow(follow);
+    }, [follow]);
+
+    useEffect(() => {
+        setFollowerCount(user.follower_count);
+    }, [user.follower_count]);
+
     if (loading) {
         return (
             <div
@@ -32,20 +50,38 @@ const AuthorInfo = ({
         );
     }
 
-    if (!author) {
+    if (!user) {
         return null;
     }
 
     const {
-        name,
+        first_name,
+        last_name,
         title,
-        bio,
+        about,
         avatar,
         social = {},
-        postsCount,
-        followers,
-        following,
-    } = author;
+        posts_count,
+        follower_count,
+        following_count,
+    } = user;
+
+    social["twitter"] = user.twitter_url;
+    social["github"] = user.github_url;
+    social["linkedin"] = user.linkedin_url;
+    social["website"] = user.website_url;
+
+    const handleFollow = async () => {
+        try {
+            await usersService.toggleFollower(user.id);
+
+            const newIsFollow = !isFollow;
+            setIsFollow(newIsFollow);
+            setFollowerCount((prev) => prev + (newIsFollow ? 1 : -1));
+        } catch (error) {
+            console.log(error);
+        }
+    };
 
     return (
         <div className={`${styles.authorInfo} ${className || ""}`} {...props}>
@@ -53,7 +89,7 @@ const AuthorInfo = ({
                 <div className={styles.avatarContainer}>
                     <FallbackImage
                         src={avatar}
-                        alt={name}
+                        alt={first_name}
                         className={styles.avatar}
                     />
                 </div>
@@ -61,31 +97,31 @@ const AuthorInfo = ({
                     <h3 className={styles.name}>
                         <Link
                             to={`/profile/${
-                                author?.username ||
-                                name?.toLowerCase().replace(/\s+/g, "-")
+                                user?.username ||
+                                first_name?.toLowerCase().replace(/\s+/g, "-")
                             }`}
                             className={styles.nameLink}
                         >
-                            {name}
+                            {`${first_name} ${last_name}`}
                         </Link>
                     </h3>
                     {title && <p className={styles.title}>{title}</p>}
 
                     {/* Stats */}
                     <div className={styles.stats}>
-                        {postsCount !== undefined && (
+                        {posts_count !== undefined && (
                             <span className={styles.stat}>
-                                <strong>{postsCount}</strong> Posts
+                                <strong>{posts_count}</strong> Posts
                             </span>
                         )}
-                        {followers !== undefined && (
+                        {followerCount !== undefined && (
                             <span className={styles.stat}>
-                                <strong>{followers}</strong> Followers
+                                <strong>{followerCount}</strong> Followers
                             </span>
                         )}
-                        {following !== undefined && (
+                        {following_count !== undefined && (
                             <span className={styles.stat}>
-                                <strong>{following}</strong> Following
+                                <strong>{following_count}</strong> Following
                             </span>
                         )}
                     </div>
@@ -93,16 +129,20 @@ const AuthorInfo = ({
 
                 {showFollowButton && (
                     <div className={styles.action}>
-                        <Button size="sm" variant="primary">
-                            Follow
+                        <Button
+                            onClick={handleFollow}
+                            size="sm"
+                            variant="primary"
+                        >
+                            {!isFollow ? "Follow" : "UnFollow"}
                         </Button>
                     </div>
                 )}
             </div>
 
-            {showBio && bio && (
+            {showBio && about && (
                 <div className={styles.bio}>
-                    <p>{bio}</p>
+                    <p>{about}</p>
                 </div>
             )}
 
@@ -190,11 +230,11 @@ const AuthorInfo = ({
 };
 
 AuthorInfo.propTypes = {
-    author: PropTypes.shape({
-        name: PropTypes.string.isRequired,
+    user: PropTypes.shape({
+        first_name: PropTypes.string.isRequired,
         username: PropTypes.string,
         title: PropTypes.string,
-        bio: PropTypes.string,
+        about: PropTypes.string,
         avatar: PropTypes.string.isRequired,
         social: PropTypes.shape({
             twitter: PropTypes.string,
@@ -211,6 +251,7 @@ AuthorInfo.propTypes = {
     showFollowButton: PropTypes.bool,
     loading: PropTypes.bool,
     className: PropTypes.string,
+    follow: PropTypes.bool,
 };
 
 export default AuthorInfo;

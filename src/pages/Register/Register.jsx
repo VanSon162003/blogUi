@@ -97,11 +97,6 @@ const Register = () => {
 
         try {
             // Mock successful registration
-            console.log("Registration successful:", {
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                email: formData.email,
-            });
 
             const { email, password, firstName, lastName, ...form } = formData;
 
@@ -112,8 +107,6 @@ const Register = () => {
                 last_name: lastName,
                 username: email.split("@")[0],
             };
-
-            console.log(data);
 
             await authService.register(data);
 
@@ -129,8 +122,7 @@ const Register = () => {
                 });
             }, 3000);
         } catch (error) {
-            console.error("Registration failed:", error);
-            setErrors({ submit: "Registration failed. Please try again." });
+            setErrors({ submit: error });
         } finally {
             setIsSubmitting(false);
         }
