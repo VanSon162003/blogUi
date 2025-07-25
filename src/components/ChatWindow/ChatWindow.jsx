@@ -10,6 +10,7 @@ import socketClient from "../../utils/websocket";
 import conversationService from "../../services/conversationService";
 import messageService from "../../services/messageService";
 import useUser from "../../hook/useUser";
+import isHttps from "../../utils/isHttps";
 
 const ChatWindow = ({
     user,
@@ -26,7 +27,7 @@ const ChatWindow = ({
     const messagesEndRef = useRef(null);
     const menuRef = useRef(null);
 
-    useUser();
+    // useUser();
 
     // Mock messages for demonstration
     // const mockMessages = [
@@ -244,11 +245,15 @@ const ChatWindow = ({
                 onClick={() => onMinimize(false)}
             >
                 <FallbackImage
-                    src={user?.avatar}
-                    alt={user?.name}
+                    src={
+                        isHttps(user?.avatar)
+                            ? user?.avatar
+                            : `${import.meta.env.VITE_BASE_URL}/${user?.avatar}`
+                    }
+                    alt={user?.username}
                     className={styles.minimizedAvatar}
                 />
-                <span className={styles.minimizedName}>{user?.name}</span>
+                <span className={styles.minimizedName}>{user?.username}</span>
             </div>
         );
     }
@@ -259,12 +264,18 @@ const ChatWindow = ({
             <div className={styles.header}>
                 <div className={styles.userInfo}>
                     <FallbackImage
-                        src={user?.avatar}
-                        alt={user?.name}
+                        src={
+                            isHttps(user?.avatar)
+                                ? user?.avatar
+                                : `${import.meta.env.VITE_BASE_URL}/${
+                                      user?.avatar
+                                  }`
+                        }
+                        alt={user?.username}
                         className={styles.avatar}
                     />
                     <div className={styles.userDetails}>
-                        <span className={styles.name}>{user?.name}</span>
+                        <span className={styles.name}>{user?.username}</span>
                         <span className={styles.status}>
                             Hoạt động 5 phút trước
                         </span>
@@ -395,7 +406,8 @@ const ChatWindow = ({
 
 ChatWindow.propTypes = {
     user: PropTypes.shape({
-        name: PropTypes.string.isRequired,
+        first_name: PropTypes.string,
+        last_name: PropTypes.string,
         avatar: PropTypes.string,
         username: PropTypes.string,
     }).isRequired,

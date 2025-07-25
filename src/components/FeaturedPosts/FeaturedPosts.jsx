@@ -42,6 +42,10 @@ const FeaturedPosts = ({
         );
     }
 
+    const sortedPosts = [...posts].sort(
+        (a, b) => b.likes_count - a.likes_count
+    );
+
     const handleLike = async (postId) => {
         try {
             return await postsService.toggleLikePost(postId);
@@ -54,11 +58,16 @@ const FeaturedPosts = ({
         try {
             return await postsService.toggleBookmarkPost(postId);
         } catch (error) {
-            throw new Error(error);
+            const check =
+                Object.keys(error).length === 0 && error.constructor === Object;
+
+            throw new Error(
+                !check ? error : "You must be logged in to save this post."
+            );
         }
     };
 
-    const displayPosts = posts.slice(0, maxPosts);
+    const displayPosts = sortedPosts.slice(0, maxPosts);
 
     return (
         <section
@@ -83,7 +92,7 @@ const FeaturedPosts = ({
                             excerpt={post.meta_description}
                             user={post.user}
                             published_at={post.published_at}
-                            readTime={2}
+                            readTime={Math.floor((Math.random() + 1) * 10)}
                             topic={post.topics.name}
                             slug={post.slug}
                             featuredImage={post.thumbnail}

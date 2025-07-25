@@ -7,6 +7,9 @@ import FallbackImage from "../../components/FallbackImage/FallbackImage";
 import RichTextEditor from "../../components/RichTextEditor/RichTextEditor";
 import PublishModal from "../../components/PublishModal/PublishModal";
 import styles from "./WritePost.module.scss";
+import topicsService from "../../services/topicsService";
+import postsService from "../../services/postsService";
+import dayjs from "dayjs";
 
 const WritePost = () => {
     const { slug } = useParams();
@@ -15,14 +18,15 @@ const WritePost = () => {
 
     const [formData, setFormData] = useState({
         title: "",
-        excerpt: "",
+        description: "",
         content: "",
-        coverImage: "",
+        thumbnail: null, // Sẽ lưu File object
+        previewThumbnail: "", // Dùng để preview ảnh
         topics: [],
         status: "draft",
         visibility: "public",
-        metaTitle: "",
-        metaDescription: "",
+        meta_title: "",
+        meta_description: "",
     });
 
     const [errors, setErrors] = useState({});
@@ -32,48 +36,43 @@ const WritePost = () => {
     const [topicInput, setTopicInput] = useState("");
     const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
     const [showPublishModal, setShowPublishModal] = useState(false);
+    const [topics, setTopics] = useState([]);
 
     const headerRef = useRef(null);
 
-    const availableTopics = [
-        "React",
-        "JavaScript",
-        "TypeScript",
-        "Node.js",
-        "CSS",
-        "HTML",
-        "Python",
-        "Vue.js",
-        "Angular",
-        "Backend",
-        "Frontend",
-        "DevOps",
-    ];
+    useEffect(() => {
+        (async () => {
+            const result = await topicsService.getAll();
+            const topics = result.data.map((item) => item.name);
+            setTopics(topics);
+        })();
+    }, []);
 
     useEffect(() => {
         if (isEditing) {
-            // Mock existing post data
             const mockPost = {
                 title: "Getting Started with React Hooks",
-                excerpt:
+                description:
                     "Learn the fundamentals of React Hooks and how they can simplify your component logic.",
                 content:
                     "# Getting Started with React Hooks\n\nReact Hooks revolutionized how we write components...",
-                coverImage:
+                previewThumbnail:
                     "https://via.placeholder.com/800x400?text=React+Hooks",
                 topics: ["React", "JavaScript"],
                 status: "draft",
                 visibility: "public",
-                metaTitle: "Getting Started with React Hooks - Complete Guide",
-                metaDescription:
+                meta_title: "Getting Started with React Hooks - Complete Guide",
+                meta_description:
                     "Comprehensive guide to React Hooks, covering useState, useEffect, and custom hooks with practical examples and best practices.",
             };
-            setFormData(mockPost);
+            setFormData((prev) => ({
+                ...prev,
+                ...mockPost,
+            }));
             setSelectedTopics(mockPost.topics);
         }
     }, [isEditing]);
 
-    // Sticky header scroll effect
     useEffect(() => {
         const handleScroll = () => {
             if (headerRef.current) {
@@ -126,36 +125,47 @@ const WritePost = () => {
 
     const validateForm = () => {
         const newErrors = {};
-
-        if (!formData.title.trim()) {
-            newErrors.title = "Title is required";
-        }
-
-        if (!formData.excerpt.trim()) {
-            newErrors.excerpt = "Excerpt is required";
-        }
-
-        if (!formData.content.trim()) {
-            newErrors.content = "Content is required";
-        }
+        if (!formData.title.trim()) newErrors.title = "Title is required";
+        if (!formData.description.trim())
+            newErrors.description = "Excerpt is required";
+        if (!formData.content.trim()) newErrors.content = "Content is required";
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
+    const buildFormData = (data, status = "draft") => {
+        const form = new FormData();
+        form.append("title", data.title);
+        form.append("description", data.description);
+        form.append("content", data.content);
+        form.append("status", status);
+        form.append("visibility", data.visibility);
+        form.append("meta_title", data.meta_title);
+        form.append("meta_description", data.meta_description);
+        form.append("topics", JSON.stringify(data.topics));
+
+        if (data.isScheduled) {
+            const now = dayjs(data.publishDate);
+            const formatted = now.format("YYYY-MM-DD HH:mm:ss");
+            form.append("published_at", formatted);
+        }
+
+        if (data.thumbnail instanceof File) {
+            form.append("thumbnail", data.thumbnail);
+        }
+
+        return form;
+    };
+
     const handleSave = async (status = "draft") => {
         if (!validateForm()) return;
-
         setSaving(true);
         try {
-            const postData = {
-                ...formData,
-                status,
-                updatedAt: new Date().toISOString(),
-            };
+            const form = buildFormData(formData, status);
+            await postsService.create(form);
 
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            console.log("Saving post:", postData);
+            console.log("Saving post:", Object.fromEntries(form.entries()));
             navigate("/my-posts");
         } catch (error) {
             console.error("Error saving post:", error);
@@ -164,15 +174,32 @@ const WritePost = () => {
         }
     };
 
+    const handlePublish = async (publishData) => {
+        if (!validateForm()) return;
+        setSaving(true);
+        try {
+            const form = buildFormData(publishData, "published");
+
+            await postsService.create(form);
+
+            console.log("Publishing post:", Object.fromEntries(form.entries()));
+            setShowPublishModal(false);
+            navigate("/my-posts");
+        } catch (error) {
+            console.error("Error publishing post:", error);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
-            const mockImageUrl = `https://via.placeholder.com/800x400?text=${encodeURIComponent(
-                file.name
-            )}`;
+            const previewUrl = URL.createObjectURL(file);
             setFormData((prev) => ({
                 ...prev,
-                coverImage: mockImageUrl,
+                thumbnail: file,
+                previewThumbnail: previewUrl,
             }));
         }
     };
@@ -180,29 +207,6 @@ const WritePost = () => {
     const handleOpenPublishModal = () => {
         if (validateForm()) {
             setShowPublishModal(true);
-        }
-        // If validation fails, errors will be shown automatically via the errors state
-    };
-
-    const handlePublish = async (publishData) => {
-        if (!validateForm()) return;
-
-        setSaving(true);
-        try {
-            const postData = {
-                ...publishData,
-                status: "published",
-                updatedAt: new Date().toISOString(),
-            };
-
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            console.log("Publishing post:", postData);
-            setShowPublishModal(false);
-            navigate("/my-posts");
-        } catch (error) {
-            console.error("Error publishing post:", error);
-        } finally {
-            setSaving(false);
         }
     };
 
@@ -227,17 +231,15 @@ const WritePost = () => {
                                 fullWidth
                                 size="lg"
                             />
-
                             <Input
                                 label="Excerpt"
                                 placeholder="Write a brief description..."
-                                value={formData.excerpt}
-                                onChange={handleInputChange("excerpt")}
-                                error={errors.excerpt}
+                                value={formData.description}
+                                onChange={handleInputChange("description")}
+                                error={errors.description}
                                 required
                                 fullWidth
                             />
-
                             <div className={styles.contentSection}>
                                 <label
                                     className={styles.label}
@@ -264,9 +266,9 @@ const WritePost = () => {
                     <div className={styles.preview}>
                         <div className={styles.previewContent}>
                             <div className={styles.previewHeader}>
-                                {formData.coverImage && (
+                                {formData.previewThumbnail && (
                                     <FallbackImage
-                                        src={formData.coverImage}
+                                        src={formData.previewThumbnail}
                                         alt={formData.title}
                                         className={styles.previewCoverImage}
                                     />
@@ -275,7 +277,8 @@ const WritePost = () => {
                                     {formData.title || "Your Post Title"}
                                 </h1>
                                 <p className={styles.previewExcerpt}>
-                                    {formData.excerpt || "Your post excerpt..."}
+                                    {formData.description ||
+                                        "Your post excerpt..."}
                                 </p>
                                 <div className={styles.previewTopics}>
                                     {selectedTopics.map((topic) => (
@@ -285,7 +288,6 @@ const WritePost = () => {
                                     ))}
                                 </div>
                             </div>
-
                             <div className={styles.previewBody}>
                                 <div
                                     className={styles.previewText}
@@ -316,7 +318,6 @@ const WritePost = () => {
                         <span>~{readingTime} min read</span>
                     </div>
                 </div>
-
                 <div className={styles.actions}>
                     <div className={styles.viewToggle}>
                         <button
@@ -336,7 +337,6 @@ const WritePost = () => {
                             Preview
                         </button>
                     </div>
-
                     <div className={styles.saveActions}>
                         <Button
                             variant="secondary"
@@ -366,7 +366,7 @@ const WritePost = () => {
                 selectedTopics={selectedTopics}
                 topicInput={topicInput}
                 setTopicInput={setTopicInput}
-                availableTopics={availableTopics}
+                availableTopics={topics}
                 handleAddTopic={handleAddTopic}
                 handleRemoveTopic={handleRemoveTopic}
                 handleImageUpload={handleImageUpload}

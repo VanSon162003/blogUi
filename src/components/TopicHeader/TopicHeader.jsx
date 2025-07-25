@@ -1,7 +1,9 @@
+/* eslint-disable react/prop-types */
 import PropTypes from "prop-types";
 import Badge from "../Badge/Badge";
 import FallbackImage from "../FallbackImage/FallbackImage";
 import styles from "./TopicHeader.module.scss";
+import isHttps from "../../utils/isHttps";
 
 const TopicHeader = ({ topic, loading = false, className, ...props }) => {
     if (loading) {
@@ -36,7 +38,13 @@ const TopicHeader = ({ topic, loading = false, className, ...props }) => {
                             <span className={styles.emoji}>{topic.icon}</span>
                         ) : (
                             <FallbackImage
-                                src={topic.image}
+                                src={
+                                    isHttps(topic.image)
+                                        ? topic.image
+                                        : `${import.meta.env.VITE_BASE_URL}/${
+                                              topic.image
+                                          }`
+                                }
                                 alt={topic.name}
                                 className={styles.image}
                             />

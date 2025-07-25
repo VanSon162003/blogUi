@@ -8,6 +8,8 @@ import Button from "../../components/Button/Button";
 import styles from "./Bookmarks.module.scss";
 
 import postsService from "../../services/postsService";
+import bookmarksService from "../../services/bookmarksService";
+import { toast } from "react-toastify";
 
 const Bookmarks = () => {
     const [bookmarks, setBookmarks] = useState([]);
@@ -33,8 +35,6 @@ const Bookmarks = () => {
     }, []);
 
     const handleLike = async (postId) => {
-        console.log(postId);
-
         try {
             const test = await postsService.toggleLikePost(postId);
 
@@ -71,17 +71,23 @@ const Bookmarks = () => {
         return matchesSearch && matchesTopic;
     });
 
-    console.log(filteredBookmarks);
-
     const handleRemoveBookmark = (bookmarkId) => {
         setBookmarks((prev) =>
             prev.filter((bookmark) => bookmark.id !== bookmarkId)
         );
     };
 
-    const handleClearAllBookmarks = () => {
+    const handleClearAllBookmarks = async () => {
         if (window.confirm("Are you sure you want to remove all bookmarks?")) {
-            setBookmarks([]);
+            try {
+                const bookmarkIds = bookmarks.map((item) => item.bookmarks.id);
+
+                await bookmarksService.remove(bookmarkIds);
+                setBookmarks([]);
+                toast.success("You have removed all saved posts.");
+            } catch (error) {
+                toast.error(error);
+            }
         }
     };
 
@@ -205,9 +211,11 @@ const Bookmarks = () => {
                                         id={bookmark.id}
                                         title={bookmark.title}
                                         excerpt={bookmark.meta_description}
-                                        author={bookmark.user}
-                                        publishedAt={bookmark.published_at}
-                                        readTime={2}
+                                        user={bookmark.user}
+                                        published_at={bookmark.published_at}
+                                        readTime={Math.floor(
+                                            (Math.random() + 1) * 10
+                                        )}
                                         topic={bookmark.topics}
                                         slug={bookmark.slug}
                                         featuredImage={bookmark.thumbnail}

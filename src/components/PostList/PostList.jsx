@@ -55,34 +55,39 @@ const PostList = ({
         }
     };
 
-    const displayPosts = posts.slice(0, maxPosts).reverse();
+    const displayPosts = posts.slice(0, maxPosts);
 
     return (
         <div className={`${styles.postList} ${className || ""}`} {...props}>
             <div className={`${styles.postsContainer} ${styles[layout]}`}>
-                {displayPosts.map((post) => (
-                    <div key={post.id || post.slug} className={styles.postItem}>
-                        <PostCard
-                            id={post.id}
-                            likes={post.likes_count}
-                            views={post.views_count}
-                            title={post.title}
-                            excerpt={post.meta_description}
-                            user={post.user}
-                            published_at={post.published_at}
-                            readTime={2}
-                            topic={post.topics}
-                            slug={post.slug}
-                            featuredImage={post.thumbnail}
-                            isLiked={post?.is_like ? true : false}
-                            onLike={(id, liked) => handleLike(id, liked)}
-                            onBookmark={(id, liked) =>
-                                handleBookmark(id, liked)
-                            }
-                            isBookmarked={post?.is_bookmark || false}
-                        />
-                    </div>
-                ))}
+                {displayPosts.map((post) => {
+                    return (
+                        <div
+                            key={post.id || post.slug}
+                            className={styles.postItem}
+                        >
+                            <PostCard
+                                id={post.id}
+                                likes={post.likes_count}
+                                views={post.views_count}
+                                title={post.title}
+                                excerpt={post.meta_description}
+                                user={post.user}
+                                published_at={post.published_at}
+                                readTime={Math.floor((Math.random() + 1) * 10)}
+                                topic={post.topics}
+                                slug={post.slug}
+                                featuredImage={post.thumbnail}
+                                isLiked={post?.is_like ? true : false}
+                                onLike={(id, liked) => handleLike(id, liked)}
+                                onBookmark={(id, liked) =>
+                                    handleBookmark(id, liked)
+                                }
+                                isBookmarked={post?.is_bookmark || false}
+                            />
+                        </div>
+                    );
+                })}
             </div>
 
             {showPagination && totalPages > 1 && (

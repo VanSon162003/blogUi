@@ -13,6 +13,7 @@ import usersService from "../../services/usersService";
 import useUser from "../../hook/useUser";
 
 import commentsService from "../../services/commentsService";
+import { toast } from "react-toastify";
 
 const BlogDetail = () => {
     const { slug } = useParams();
@@ -198,6 +199,7 @@ const BlogDetail = () => {
 
             await commentsService.update(commentId, {
                 content: newContent,
+                edited_at: Date.now(),
             });
 
             const updateCommentRecursively = (comments) => {
@@ -264,18 +266,17 @@ const BlogDetail = () => {
         setLikingInProgress(true);
 
         // Optimistic update
-        setIsLiked(!isLiked);
-        setLikes(isLiked ? likes - 1 : likes + 1);
 
         try {
             // Simulate API call
             await postsService.toggleLikePost(post?.id);
-            console.log("Post like toggled:", !isLiked);
+            setIsLiked(!isLiked);
+            setLikes(isLiked ? likes - 1 : likes + 1);
         } catch (error) {
             // Revert on error
             setIsLiked(isLiked);
             setLikes(likes);
-            console.error("Failed to toggle like:", error);
+            toast.error(error);
         } finally {
             setLikingInProgress(false);
         }
@@ -287,16 +288,15 @@ const BlogDetail = () => {
         setBookmarkingInProgress(true);
 
         // Optimistic update
-        setIsBookmarked(!isBookmarked);
 
         try {
             // Simulate API call
             await postsService.toggleBookmarkPost(post?.id);
-            console.log("Post bookmark toggled:", !isBookmarked);
+            setIsBookmarked(!isBookmarked);
         } catch (error) {
             // Revert on error
             setIsBookmarked(isBookmarked);
-            console.error("Failed to toggle bookmark:", error);
+            toast.error(error);
         } finally {
             setBookmarkingInProgress(false);
         }
@@ -423,7 +423,18 @@ const BlogDetail = () => {
 
             {/* Author Info */}
             <div className={styles.authorSection}>
-                <AuthorInfo follow={follow} user={post.user} />
+                <AuthorInfo
+                    follow={follow}
+                    user={{
+                        ...post.user,
+                        social: {
+                            twitter: post.user?.twitter_url,
+                            github: post.user?.github_url,
+                            linkedin: post.user?.linkedin_url,
+                            website: post.user?.website_url,
+                        },
+                    }}
+                />
             </div>
 
             {/* Related Posts */}

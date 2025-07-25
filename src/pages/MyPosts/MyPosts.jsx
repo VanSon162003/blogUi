@@ -7,6 +7,8 @@ import Loading from "../../components/Loading/Loading";
 import Badge from "../../components/Badge/Badge";
 import styles from "./MyPosts.module.scss";
 
+import postsService from "../../services/postsService";
+
 const MyPosts = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -14,76 +16,78 @@ const MyPosts = () => {
     const [searchTerm, setSearchTerm] = useState("");
 
     // Mock data - trong thực tế sẽ fetch từ API
-    const mockPosts = [
-        {
-            id: 1,
-            title: "Getting Started with React Hooks",
-            slug: "getting-started-react-hooks",
-            excerpt:
-                "Learn the fundamentals of React Hooks and how they can simplify your component logic.",
-            coverImage: "https://via.placeholder.com/400x200?text=React+Hooks",
-            readingTime: 8,
-            publishedAt: "2024-01-15",
-            status: "published",
-            topics: ["React", "JavaScript"],
-            viewsCount: 1250,
-            likesCount: 42,
-            commentsCount: 15,
-        },
-        {
-            id: 2,
-            title: "Advanced CSS Grid Techniques",
-            slug: "advanced-css-grid-techniques",
-            excerpt:
-                "Deep dive into CSS Grid and discover advanced layout techniques for modern web development.",
-            coverImage: "https://via.placeholder.com/400x200?text=CSS+Grid",
-            readingTime: 12,
-            publishedAt: "2024-01-10",
-            status: "published",
-            topics: ["CSS", "Web Design"],
-            viewsCount: 890,
-            likesCount: 28,
-            commentsCount: 8,
-        },
-        {
-            id: 3,
-            title: "Building Scalable APIs with Node.js",
-            slug: "building-scalable-apis-nodejs",
-            excerpt:
-                "Best practices for creating robust and scalable APIs using Node.js and Express.",
-            coverImage: "https://via.placeholder.com/400x200?text=Node.js+API",
-            readingTime: 15,
-            publishedAt: "2024-01-05",
-            status: "draft",
-            topics: ["Node.js", "Backend"],
-            viewsCount: 0,
-            likesCount: 0,
-            commentsCount: 0,
-        },
-        {
-            id: 4,
-            title: "Modern JavaScript ES2024 Features",
-            slug: "modern-javascript-es2024-features",
-            excerpt:
-                "Explore the latest JavaScript features and how they can improve your development workflow.",
-            coverImage:
-                "https://via.placeholder.com/400x200?text=JavaScript+ES2024",
-            readingTime: 10,
-            publishedAt: "2023-12-28",
-            status: "published",
-            topics: ["JavaScript", "ES2024"],
-            viewsCount: 2150,
-            likesCount: 67,
-            commentsCount: 23,
-        },
-    ];
+    // const mockPosts = [
+    //     {
+    //         id: 1,
+    //         title: "Getting Started with React Hooks",
+    //         slug: "getting-started-react-hooks",
+    //         excerpt:
+    //             "Learn the fundamentals of React Hooks and how they can simplify your component logic.",
+    //         coverImage: "https://via.placeholder.com/400x200?text=React+Hooks",
+    //         readingTime: 8,
+    //         publishedAt: "2024-01-15",
+    //         status: "published",
+    //         topics: ["React", "JavaScript"],
+    //         viewsCount: 1250,
+    //         likesCount: 42,
+    //         commentsCount: 15,
+    //     },
+    //     {
+    //         id: 2,
+    //         title: "Advanced CSS Grid Techniques",
+    //         slug: "advanced-css-grid-techniques",
+    //         excerpt:
+    //             "Deep dive into CSS Grid and discover advanced layout techniques for modern web development.",
+    //         coverImage: "https://via.placeholder.com/400x200?text=CSS+Grid",
+    //         readingTime: 12,
+    //         publishedAt: "2024-01-10",
+    //         status: "published",
+    //         topics: ["CSS", "Web Design"],
+    //         viewsCount: 890,
+    //         likesCount: 28,
+    //         commentsCount: 8,
+    //     },
+    //     {
+    //         id: 3,
+    //         title: "Building Scalable APIs with Node.js",
+    //         slug: "building-scalable-apis-nodejs",
+    //         excerpt:
+    //             "Best practices for creating robust and scalable APIs using Node.js and Express.",
+    //         coverImage: "https://via.placeholder.com/400x200?text=Node.js+API",
+    //         readingTime: 15,
+    //         publishedAt: "2024-01-05",
+    //         status: "draft",
+    //         topics: ["Node.js", "Backend"],
+    //         viewsCount: 0,
+    //         likesCount: 0,
+    //         commentsCount: 0,
+    //     },
+    //     {
+    //         id: 4,
+    //         title: "Modern JavaScript ES2024 Features",
+    //         slug: "modern-javascript-es2024-features",
+    //         excerpt:
+    //             "Explore the latest JavaScript features and how they can improve your development workflow.",
+    //         coverImage:
+    //             "https://via.placeholder.com/400x200?text=JavaScript+ES2024",
+    //         readingTime: 10,
+    //         publishedAt: "2023-12-28",
+    //         status: "published",
+    //         topics: ["JavaScript", "ES2024"],
+    //         viewsCount: 2150,
+    //         likesCount: 67,
+    //         commentsCount: 23,
+    //     },
+    // ];
 
     useEffect(() => {
         // Simulate API call
         const fetchPosts = async () => {
             setLoading(true);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            setPosts(mockPosts);
+
+            const result = await postsService.getAllByMe();
+
+            setPosts(result.data);
             setLoading(false);
         };
 
@@ -94,7 +98,9 @@ const MyPosts = () => {
         const matchesTab = activeTab === "all" || post.status === activeTab;
         const matchesSearch =
             post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
+            post.meta_description
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
         return matchesTab && matchesSearch;
     });
 
@@ -130,6 +136,22 @@ const MyPosts = () => {
             </div>
         );
     }
+
+    const handleLike = async (postId) => {
+        try {
+            return await postsService.toggleLikePost(postId);
+        } catch (error) {
+            throw new Error(error);
+        }
+    };
+
+    const handleBookmark = async (postId) => {
+        try {
+            return await postsService.toggleBookmarkPost(postId);
+        } catch (error) {
+            throw new Error(error);
+        }
+    };
 
     return (
         <div className={styles.container}>
@@ -237,18 +259,29 @@ const MyPosts = () => {
                             {filteredPosts.map((post) => (
                                 <div key={post.id} className={styles.postItem}>
                                     <PostCard
+                                        id={post.id}
+                                        likes={post.likes_count}
+                                        views={post.views_count}
                                         title={post.title}
-                                        excerpt={post.excerpt}
-                                        coverImage={post.coverImage}
-                                        readingTime={post.readingTime}
-                                        publishedAt={post.publishedAt}
+                                        excerpt={post.meta_description}
+                                        user={post.user}
+                                        published_at={post.published_at}
+                                        readTime={Math.floor(
+                                            (Math.random() + 1) * 10
+                                        )}
+                                        topic={post.topics}
                                         slug={post.slug}
-                                        topics={post.topics}
-                                        author={{
-                                            name: "You",
-                                            username: "you",
-                                            avatar: "https://via.placeholder.com/32?text=You",
-                                        }}
+                                        featuredImage={post.thumbnail}
+                                        isLiked={post?.is_like ? true : false}
+                                        onLike={(id, liked) =>
+                                            handleLike(id, liked)
+                                        }
+                                        onBookmark={(id, liked) =>
+                                            handleBookmark(id, liked)
+                                        }
+                                        isBookmarked={
+                                            post?.is_bookmark || false
+                                        }
                                     />
                                     <div className={styles.postMeta}>
                                         <div className={styles.postStatus}>

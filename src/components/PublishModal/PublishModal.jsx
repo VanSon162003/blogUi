@@ -7,6 +7,27 @@ import Badge from "../Badge/Badge";
 import FallbackImage from "../FallbackImage/FallbackImage";
 import styles from "./PublishModal.module.scss";
 
+const visibilityOptions = [
+    {
+        value: "public",
+        label: "Public",
+        description: "Anyone can see this post",
+        icon: "🌍",
+    },
+    {
+        value: "followers",
+        label: "Followers only",
+        description: "Only your followers can see this post",
+        icon: "👥",
+    },
+    {
+        value: "private",
+        label: "Only me",
+        description: "Only you can see this post",
+        icon: "🔒",
+    },
+];
+
 const PublishModal = ({
     isOpen,
     onClose,
@@ -25,46 +46,109 @@ const PublishModal = ({
     const [isScheduled, setIsScheduled] = useState(false);
     const [publishDate, setPublishDate] = useState("");
 
-    const visibilityOptions = [
-        {
-            value: "public",
-            label: "Public",
-            description: "Anyone on the internet can see this post",
-            icon: "🌍",
-        },
-        {
-            value: "followers",
-            label: "Followers only",
-            description: "Only people who follow you can see this post",
-            icon: "👥",
-        },
-        {
-            value: "private",
-            label: "Only me",
-            description: "Only you can see this post",
-            icon: "🔒",
-        },
-    ];
-
     const handleVisibilityChange = (visibility) => {
-        setFormData((prev) => ({
-            ...prev,
-            visibility,
-        }));
+        setFormData((prev) => ({ ...prev, visibility }));
+    };
+
+    const handleMetaChange = (field) => (e) => {
+        setFormData((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
     const handlePublish = () => {
-        const publishData = {
+        onPublish({
             ...formData,
             isScheduled,
             publishDate: isScheduled ? publishDate : null,
-        };
-        onPublish(publishData);
+        });
+    };
+
+    const renderVisibilityOptions = () =>
+        visibilityOptions.map((option) => (
+            <div
+                key={option.value}
+                className={`${styles.visibilityOption} ${
+                    formData.visibility === option.value ? styles.selected : ""
+                }`}
+                onClick={() => handleVisibilityChange(option.value)}
+            >
+                <div className={styles.optionHeader}>
+                    <span className={styles.optionIcon}>{option.icon}</span>
+                    <span className={styles.optionLabel}>{option.label}</span>
+                    <input
+                        type="radio"
+                        name="visibility"
+                        checked={formData.visibility === option.value}
+                        readOnly
+                        className={styles.visibilityRadio}
+                    />
+                </div>
+                <p className={styles.optionDescription}>{option.description}</p>
+            </div>
+        ));
+
+    const renderCoverImage = () => {
+        if (formData.previewThumbnail) {
+            const imageUrl = formData.previewThumbnail;
+
+            return (
+                <div className={styles.imagePreview}>
+                    <FallbackImage
+                        src={imageUrl}
+                        alt="Cover preview"
+                        className={styles.coverImage}
+                    />
+                    <div className={styles.imageActions}>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className={styles.fileInput}
+                            id="cover-upload-modal"
+                        />
+                        <label
+                            htmlFor="cover-upload-modal"
+                            className={styles.changeImageButton}
+                        >
+                            Change
+                        </label>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    coverImage: "",
+                                }))
+                            }
+                            className={styles.removeImageButton}
+                        >
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        return (
+            <div className={styles.uploadArea}>
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className={styles.fileInput}
+                    id="cover-upload-modal"
+                />
+                <label
+                    htmlFor="cover-upload-modal"
+                    className={styles.uploadButton}
+                >
+                    Upload Cover Image
+                </label>
+            </div>
+        );
     };
 
     if (!isOpen) return null;
 
-    const modalContent = (
+    return createPortal(
         <div className={styles.overlay} onClick={onClose}>
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.header}>
@@ -75,110 +159,44 @@ const PublishModal = ({
                 </div>
 
                 <div className={styles.content}>
-                    {/* Meta Information */}
+                    {/* SEO & Meta */}
                     <div className={styles.section}>
                         <h3 className={styles.sectionTitle}>SEO & Meta</h3>
-
                         <Input
                             label="Meta Title"
-                            placeholder="SEO-friendly title (recommended: 50-60 characters)"
-                            value={formData.metaTitle || ""}
-                            onChange={(e) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    metaTitle: e.target.value,
-                                }))
-                            }
+                            placeholder="SEO-friendly title"
+                            value={formData.meta_title || ""}
+                            onChange={handleMetaChange("meta_title")}
                             fullWidth
                             maxLength={60}
                         />
-
                         <Input
                             label="Meta Description"
-                            placeholder="Brief description for search engines (recommended: 150-160 characters)"
-                            value={formData.metaDescription || ""}
-                            onChange={(e) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    metaDescription: e.target.value,
-                                }))
-                            }
+                            placeholder="Short SEO description"
+                            value={formData.meta_description || ""}
+                            onChange={handleMetaChange("meta_description")}
                             fullWidth
                             maxLength={160}
                             rows={3}
-                            multiline
                         />
                     </div>
 
                     {/* Cover Image */}
                     <div className={styles.section}>
                         <h3 className={styles.sectionTitle}>Cover Image</h3>
-
-                        {formData.coverImage ? (
-                            <div className={styles.imagePreview}>
-                                <FallbackImage
-                                    src={formData.coverImage}
-                                    alt="Cover preview"
-                                    className={styles.coverImage}
-                                />
-                                <div className={styles.imageActions}>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleImageUpload}
-                                        className={styles.fileInput}
-                                        id="cover-upload-modal"
-                                    />
-                                    <label
-                                        htmlFor="cover-upload-modal"
-                                        className={styles.changeImageButton}
-                                    >
-                                        Change
-                                    </label>
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                coverImage: "",
-                                            }))
-                                        }
-                                        className={styles.removeImageButton}
-                                    >
-                                        Remove
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className={styles.uploadArea}>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                    className={styles.fileInput}
-                                    id="cover-upload-modal"
-                                />
-                                <label
-                                    htmlFor="cover-upload-modal"
-                                    className={styles.uploadButton}
-                                >
-                                    Upload Cover Image
-                                </label>
-                            </div>
-                        )}
+                        {renderCoverImage()}
                     </div>
 
                     {/* Topics */}
                     <div className={styles.section}>
                         <h3 className={styles.sectionTitle}>Topics</h3>
-
                         <div className={styles.topicsInput}>
                             <input
                                 type="text"
                                 placeholder="Add topics..."
                                 value={topicInput}
                                 onChange={(e) => setTopicInput(e.target.value)}
-                                onKeyPress={(e) => {
+                                onKeyDown={(e) => {
                                     if (
                                         e.key === "Enter" &&
                                         topicInput.trim()
@@ -189,7 +207,6 @@ const PublishModal = ({
                                 }}
                                 className={styles.topicInput}
                             />
-
                             <div className={styles.topicSuggestions}>
                                 {topicInput &&
                                     availableTopics
@@ -219,7 +236,6 @@ const PublishModal = ({
                                         ))}
                             </div>
                         </div>
-
                         <div className={styles.selectedTopics}>
                             {selectedTopics.map((topic) => (
                                 <Badge
@@ -243,72 +259,28 @@ const PublishModal = ({
                     {/* Visibility */}
                     <div className={styles.section}>
                         <h3 className={styles.sectionTitle}>Post Visibility</h3>
-
                         <div className={styles.visibilityOptions}>
-                            {visibilityOptions.map((option) => (
-                                <div
-                                    key={option.value}
-                                    className={`${styles.visibilityOption} ${
-                                        formData.visibility === option.value
-                                            ? styles.selected
-                                            : ""
-                                    }`}
-                                    onClick={() =>
-                                        handleVisibilityChange(option.value)
-                                    }
-                                >
-                                    <div className={styles.optionHeader}>
-                                        <span className={styles.optionIcon}>
-                                            {option.icon}
-                                        </span>
-                                        <span className={styles.optionLabel}>
-                                            {option.label}
-                                        </span>
-                                        <input
-                                            type="radio"
-                                            name="visibility"
-                                            value={option.value}
-                                            checked={
-                                                formData.visibility ===
-                                                option.value
-                                            }
-                                            onChange={() =>
-                                                handleVisibilityChange(
-                                                    option.value
-                                                )
-                                            }
-                                            className={styles.visibilityRadio}
-                                        />
-                                    </div>
-                                    <p className={styles.optionDescription}>
-                                        {option.description}
-                                    </p>
-                                </div>
-                            ))}
+                            {renderVisibilityOptions()}
                         </div>
                     </div>
 
-                    {/* Publishing Schedule */}
+                    {/* Schedule */}
                     <div className={styles.section}>
                         <h3 className={styles.sectionTitle}>Publishing</h3>
-
-                        <div className={styles.scheduleToggle}>
-                            <label className={styles.toggleLabel}>
-                                <input
-                                    type="checkbox"
-                                    checked={isScheduled}
-                                    onChange={(e) =>
-                                        setIsScheduled(e.target.checked)
-                                    }
-                                    className={styles.toggleInput}
-                                />
-                                <span className={styles.toggleSlider}></span>
-                                <span className={styles.toggleText}>
-                                    Schedule for later
-                                </span>
-                            </label>
-                        </div>
-
+                        <label className={styles.toggleLabel}>
+                            <input
+                                type="checkbox"
+                                checked={isScheduled}
+                                onChange={(e) =>
+                                    setIsScheduled(e.target.checked)
+                                }
+                                className={styles.toggleInput}
+                            />
+                            <span className={styles.toggleSlider}></span>
+                            <span className={styles.toggleText}>
+                                Schedule for later
+                            </span>
+                        </label>
                         {isScheduled && (
                             <div className={styles.scheduleDateTime}>
                                 <Input
@@ -340,10 +312,9 @@ const PublishModal = ({
                     </Button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
-
-    return createPortal(modalContent, document.body);
 };
 
 PublishModal.propTypes = {

@@ -10,6 +10,11 @@ import FallbackImage from "../../components/FallbackImage/FallbackImage";
 import ChatWindow from "../../components/ChatWindow/ChatWindow";
 
 import styles from "./Profile.module.scss";
+import useUser from "../../hook/useUser";
+import usersService from "../../services/usersService";
+import postsService from "../../services/postsService";
+import { toast } from "react-toastify";
+import isHttps from "../../utils/isHttps";
 
 const Profile = () => {
     const { username } = useParams();
@@ -23,119 +28,80 @@ const Profile = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isChatMinimized, setIsChatMinimized] = useState(false);
+    const [user, setUser] = useState({});
+    const [isFollow, setIsFollow] = useState(false);
 
-    // Check if this is the user's own profile
-    // In a real app, you'd get current user from auth context
-    const currentUser = "sonngoc"; // Mock current user
-    const isOwnProfile = currentUser === username;
+    const [followers, setFollowers] = useState(0);
 
-    // Mock profile data - trong thực tế sẽ fetch từ API
-    const mockProfile = {
-        username: username || "john-doe",
-        name: "John Doe",
-        title: "Senior Frontend Developer",
-        bio: "Passionate about modern web development, React ecosystem, and creating amazing user experiences. Love sharing knowledge through writing and open source contributions.",
-        avatar: "https://via.placeholder.com/120?text=JD",
-        coverImage: "https://via.placeholder.com/1200x300?text=Cover+Image",
-        location: "San Francisco, CA",
-        website: "https://johndoe.dev",
-        joinedDate: "2022-01-15",
-        social: {
-            twitter: "https://twitter.com/johndoe",
-            github: "https://github.com/johndoe",
-            linkedin: "https://linkedin.com/in/johndoe",
-            website: "https://johndoe.dev",
-        },
-        stats: {
-            postsCount: 42,
-            followers: 1250,
-            following: 180,
-            likes: 3400,
-        },
-        skills: ["React", "TypeScript", "Node.js", "GraphQL", "AWS", "Docker"],
-        badges: [
-            { name: "Top Author", color: "primary", icon: "🏆" },
-            { name: "Early Adopter", color: "secondary", icon: "🚀" },
-            { name: "Community Helper", color: "success", icon: "🤝" },
-        ],
-    };
+    const { currentUser } = useUser();
 
-    // Mock posts data
-    const generatePosts = (page = 1) => {
-        const postsPerPage = 6;
-        const totalPosts = 42;
-        const startIndex = (page - 1) * postsPerPage;
+    useEffect(() => {
+        (async () => {
+            const response = await usersService.getUserByUsername(username);
 
-        return Array.from(
-            { length: Math.min(postsPerPage, totalPosts - startIndex) },
-            (_, i) => ({
-                id: startIndex + i + 1,
-                title: `Understanding ${
-                    [
-                        "React Hooks",
-                        "TypeScript Generics",
-                        "CSS Grid",
-                        "Node.js Streams",
-                        "GraphQL Queries",
-                        "Docker Containers",
-                    ][i % 6]
-                }`,
-                excerpt:
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-                author: {
-                    name: mockProfile.name,
-                    avatar: mockProfile.avatar,
-                    username: mockProfile.username,
+            if (!response?.success || !response?.data) return;
+
+            const userData = { ...response.data };
+            userData.skills =
+                typeof userData.skills === "string"
+                    ? JSON.parse(userData.skills) || []
+                    : userData.skills;
+
+            setUser({
+                ...userData,
+                social: {
+                    twitter: userData.twitter_url,
+                    github: userData.github_url,
+                    linkedin: userData.linkedin_url,
+                    website: userData.website_url,
                 },
-                publishedAt: new Date(
-                    Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
-                ).toISOString(),
-                readTime: Math.floor(Math.random() * 10) + 3,
-                topic: [
-                    "React",
-                    "TypeScript",
-                    "CSS",
-                    "Node.js",
-                    "GraphQL",
-                    "DevOps",
-                ][i % 6],
-                slug: `post-${startIndex + i + 1}`,
-                featuredImage: `https://via.placeholder.com/400x200?text=Post+${
-                    startIndex + i + 1
-                }`,
-                likes: Math.floor(Math.random() * 100) + 10,
-                comments: Math.floor(Math.random() * 50) + 5,
-            })
-        );
-    };
+            });
+
+            setFollowers(response.data.follower_count);
+        })();
+    }, [username]);
+
+    const isOwnProfile = profile?.username === currentUser?.data.username;
 
     useEffect(() => {
         const loadProfile = async () => {
             setLoading(true);
             // Simulate API delay
-            await new Promise((resolve) => setTimeout(resolve, 800));
-            setProfile(mockProfile);
+            setProfile(user);
             setLoading(false);
         };
 
         loadProfile();
-    }, [username]);
+    }, [user]);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const check = await usersService.checkFollower(user?.id);
+                setIsFollow(check?.data);
+            } catch (error) {
+                console.log(error);
+            }
+        })();
+    }, [user]);
 
     useEffect(() => {
         const loadPosts = async () => {
             setPostsLoading(true);
             // Simulate API delay
-            await new Promise((resolve) => setTimeout(resolve, 600));
-            const newPosts = generatePosts(currentPage);
-            setPosts(newPosts);
-            setTotalPages(Math.ceil(42 / 6)); // 42 total posts, 6 per page
+
+            const posts = await postsService.getByUserName(username);
+
+            // const newPosts = generatePosts(currentPage);
+            setPosts(posts.data);
+            setTotalPages(Math.ceil(posts.data.length / 6)); // 42 total posts, 6 per page
             setPostsLoading(false);
         };
 
         if (profile) {
             loadPosts();
         }
-    }, [profile, currentPage, activeTab]);
+    }, [profile, username, activeTab]);
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
@@ -161,6 +127,21 @@ const Profile = () => {
 
     const handleChatMinimize = (minimize) => {
         setIsChatMinimized(minimize);
+    };
+
+    const handleFollow = async () => {
+        try {
+            await usersService.toggleFollower(user.id);
+
+            const toggle = !isFollow;
+
+            setIsFollow(toggle);
+            setFollowers((prev) => {
+                return toggle ? prev + 1 : prev - 1;
+            });
+        } catch (error) {
+            toast.error(error);
+        }
     };
 
     if (loading) {
@@ -192,7 +173,16 @@ const Profile = () => {
             {/* Cover Section */}
             <div className={styles.coverSection}>
                 <div className={styles.coverImage}>
-                    <FallbackImage src={profile.coverImage} alt="Cover" />
+                    <FallbackImage
+                        src={
+                            isHttps(profile?.cover_image)
+                                ? profile?.cover_image
+                                : `${import.meta.env.VITE_BASE_URL}/${
+                                      profile?.cover_image
+                                  }`
+                        }
+                        alt="Cover"
+                    />
                     <div className={styles.coverOverlay}></div>
                 </div>
 
@@ -201,13 +191,20 @@ const Profile = () => {
                         <div className={styles.headerContent}>
                             <div className={styles.avatarSection}>
                                 <FallbackImage
-                                    src={profile.avatar}
-                                    alt={profile.name}
+                                    src={
+                                        isHttps(profile?.avatar)
+                                            ? profile?.avatar
+                                            : `${
+                                                  import.meta.env.VITE_BASE_URL
+                                              }/${profile?.avatar}`
+                                    }
+                                    alt={profile?.username}
                                     className={styles.avatar}
                                 />
                                 <div className={styles.basicInfo}>
                                     <h1 className={styles.name}>
-                                        {profile.name}
+                                        {profile?.fullname ||
+                                            `${profile?.first_name} ${profile?.last_name}`}
                                     </h1>
                                     <p className={styles.username}>
                                         @{profile.username}
@@ -235,8 +232,12 @@ const Profile = () => {
                                     </Button>
                                 ) : (
                                     <>
-                                        <Button variant="primary" size="md">
-                                            Follow
+                                        <Button
+                                            onClick={handleFollow}
+                                            variant="primary"
+                                            size="md"
+                                        >
+                                            {!isFollow ? "Follow" : "UnFollow"}
                                         </Button>
                                         <Button
                                             variant="ghost"
@@ -259,10 +260,10 @@ const Profile = () => {
                     {/* Sidebar */}
                     <aside className={styles.sidebar}>
                         {/* Bio */}
-                        {profile.bio && (
+                        {profile?.about && (
                             <div className={styles.bioCard}>
                                 <h3>About</h3>
-                                <p>{profile.bio}</p>
+                                <p>{profile?.about}</p>
                             </div>
                         )}
 
@@ -271,23 +272,19 @@ const Profile = () => {
                             <h3>Stats</h3>
                             <div className={styles.stats}>
                                 <div className={styles.stat}>
-                                    <strong>{profile.stats.postsCount}</strong>
+                                    <strong>{profile?.posts_count}</strong>
                                     <span>Posts</span>
                                 </div>
                                 <div className={styles.stat}>
-                                    <strong>
-                                        {profile.stats.followers.toLocaleString()}
-                                    </strong>
+                                    <strong>{followers}</strong>
                                     <span>Followers</span>
                                 </div>
                                 <div className={styles.stat}>
-                                    <strong>{profile.stats.following}</strong>
+                                    <strong>{profile?.following_count}</strong>
                                     <span>Following</span>
                                 </div>
                                 <div className={styles.stat}>
-                                    <strong>
-                                        {profile.stats.likes.toLocaleString()}
-                                    </strong>
+                                    <strong>{profile?.likes_count}</strong>
                                     <span>Likes</span>
                                 </div>
                             </div>
@@ -345,17 +342,17 @@ const Profile = () => {
                                         <span>{profile.location}</span>
                                     </div>
                                 )}
-                                {profile.website && (
+                                {profile.website_url && (
                                     <div className={styles.infoItem}>
                                         <span className={styles.infoIcon}>
                                             🌐
                                         </span>
                                         <a
-                                            href={profile.website}
+                                            href={profile.website_url}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
-                                            {profile.website.replace(
+                                            {profile.website_url.replace(
                                                 /^https?:\/\//,
                                                 ""
                                             )}
@@ -365,7 +362,7 @@ const Profile = () => {
                                 <div className={styles.infoItem}>
                                     <span className={styles.infoIcon}>📅</span>
                                     <span>
-                                        Joined {formatDate(profile.joinedDate)}
+                                        Joined {formatDate(profile?.createdAt)}
                                     </span>
                                 </div>
                             </div>
@@ -419,7 +416,7 @@ const Profile = () => {
                                 }`}
                                 onClick={() => setActiveTab("posts")}
                             >
-                                Posts ({profile.stats.postsCount})
+                                Posts ({profile?.posts_count})
                             </button>
                             <button
                                 className={`${styles.tab} ${
@@ -437,9 +434,14 @@ const Profile = () => {
                                 <div className={styles.postsTab}>
                                     <PostList
                                         posts={posts}
+                                        maxPosts={posts.length}
                                         loading={postsLoading}
                                         currentPage={currentPage}
                                         totalPages={totalPages}
+                                        visibility={{
+                                            followers: isFollow,
+                                            isOwnProfile,
+                                        }}
                                         onPageChange={handlePageChange}
                                         layout="grid"
                                     />
@@ -449,16 +451,24 @@ const Profile = () => {
                             {activeTab === "about" && (
                                 <div className={styles.aboutTab}>
                                     <AuthorInfo
-                                        author={{
-                                            name: profile.name,
+                                        user={{
+                                            fullname: profile.fullname,
+
+                                            first_name: profile.first_name,
+                                            last_name: profile.last_name,
+                                            username: profile.username,
                                             title: profile.title,
-                                            bio: profile.bio,
+                                            about: profile.about,
                                             avatar: profile.avatar,
-                                            social: profile.social,
-                                            postsCount:
-                                                profile.stats.postsCount,
-                                            followers: profile.stats.followers,
-                                            following: profile.stats.following,
+                                            social: {
+                                                twitter: profile?.twitter_url,
+                                                github: profile?.github_url,
+                                                linkedin: profile?.linkedin_url,
+                                                website: profile?.website_url,
+                                            },
+                                            postsCount: profile.posts_count,
+                                            followers: profile.follower_count,
+                                            following: profile.following_count,
                                         }}
                                         showFollowButton={false}
                                     />
@@ -473,9 +483,10 @@ const Profile = () => {
             {!isOwnProfile && (
                 <ChatWindow
                     user={{
-                        name: profile.name,
-                        avatar: profile.avatar,
-                        username: profile.username,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        avatar: user.avatar,
+                        username: user.username,
                     }}
                     isOpen={isChatOpen}
                     isMinimized={isChatMinimized}

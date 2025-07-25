@@ -7,6 +7,8 @@ import FallbackImage from "../FallbackImage/FallbackImage";
 import styles from "./AuthorInfo.module.scss";
 import { useEffect, useState } from "react";
 import usersService from "../../services/usersService";
+import { toast } from "react-toastify";
+import isHttps from "../../utils/isHttps";
 
 const AuthorInfo = ({
     user,
@@ -66,11 +68,6 @@ const AuthorInfo = ({
         following_count,
     } = user;
 
-    social["twitter"] = user.twitter_url;
-    social["github"] = user.github_url;
-    social["linkedin"] = user.linkedin_url;
-    social["website"] = user.website_url;
-
     const handleFollow = async () => {
         try {
             await usersService.toggleFollower(user.id);
@@ -79,7 +76,7 @@ const AuthorInfo = ({
             setIsFollow(newIsFollow);
             setFollowerCount((prev) => prev + (newIsFollow ? 1 : -1));
         } catch (error) {
-            console.log(error);
+            toast.error(error);
         }
     };
 
@@ -88,7 +85,11 @@ const AuthorInfo = ({
             <div className={styles.header}>
                 <div className={styles.avatarContainer}>
                     <FallbackImage
-                        src={avatar}
+                        src={
+                            isHttps(avatar)
+                                ? avatar
+                                : `${import.meta.env.VITE_BASE_URL}/${avatar}`
+                        }
                         alt={first_name}
                         className={styles.avatar}
                     />
@@ -102,7 +103,8 @@ const AuthorInfo = ({
                             }`}
                             className={styles.nameLink}
                         >
-                            {`${first_name} ${last_name}`}
+                            {user?.fullname ||
+                                `${user?.first_name} ${user?.last_name}`}
                         </Link>
                     </h3>
                     {title && <p className={styles.title}>{title}</p>}

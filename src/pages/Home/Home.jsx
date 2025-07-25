@@ -18,46 +18,6 @@ const Home = () => {
         })();
     }, []);
 
-    // Mock data - will be replaced with API calls later
-    // const mockTopics = [
-    //     {
-    //         id: 1,
-    //         name: "JavaScript",
-    //         slug: "javascript",
-    //         description:
-    //             "Everything about JavaScript programming language, frameworks, and best practices",
-    //         icon: "🚀",
-    //         postCount: 45,
-    //     },
-    //     {
-    //         id: 2,
-    //         name: "React",
-    //         slug: "react",
-    //         description:
-    //             "React.js tutorials, tips, and advanced patterns for building modern web applications",
-    //         icon: "⚛️",
-    //         postCount: 32,
-    //     },
-    //     {
-    //         id: 3,
-    //         name: "Node.js",
-    //         slug: "nodejs",
-    //         description:
-    //             "Server-side JavaScript development with Node.js and its ecosystem",
-    //         icon: "🟢",
-    //         postCount: 28,
-    //     },
-    //     {
-    //         id: 4,
-    //         name: "CSS",
-    //         slug: "css",
-    //         description:
-    //             "Modern CSS techniques, animations, and responsive design patterns",
-    //         icon: "🎨",
-    //         postCount: 23,
-    //     },
-    // ];
-
     useEffect(() => {
         const loadRecentPosts = async () => {
             setLoading(true);

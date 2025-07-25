@@ -5,8 +5,18 @@ export const getAll = async () => {
     return result;
 };
 
+export const getAllByMe = async () => {
+    const result = await httpRequest.get("/posts/me");
+    return result;
+};
+
 export const getBySlug = async (slug) => {
     const result = await httpRequest.get(`/posts/slug/${slug}`);
+    return result;
+};
+
+export const getByUserName = async (username) => {
+    const result = await httpRequest.get(`/posts/user/${username}`);
     return result;
 };
 
@@ -35,12 +45,20 @@ export const getPostsRelate = async (currentPostId) => {
     return result;
 };
 
+export const create = async (data) => {
+    const result = await httpRequest.post(`/posts`, data);
+    return result;
+};
+
 export default {
     getAll,
+    getAllByMe,
     toggleLikePost,
     toggleBookmarkPost,
     getListByTopicId,
     getListByUserBookmarks,
     getBySlug,
     getPostsRelate,
+    getByUserName,
+    create,
 };

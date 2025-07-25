@@ -65,26 +65,25 @@ httpRequest.interceptors.response.use(
 
 const send = async (method, url, data, config) => {
     try {
-        const isPutOrPatch = ["put", "patch"].includes(method.toLowerCase());
-        const effectiveMethod = isPutOrPatch ? "post" : method;
-        const effectivePath = isPutOrPatch
-            ? `${url}${url.includes("?") ? "&" : "?"}_method=${method}`
-            : url;
+        // const isPutOrPatch = ["put", "patch"].includes(method.toLowerCase());
+        // const effectiveMethod = isPutOrPatch ? "post" : method;
+        // const effectivePath = isPutOrPatch
+        //     ? `${url}${url.includes("?") ? "&" : "?"}_method=${method}`
+        //     : url;
 
         const res = await httpRequest.request({
-            method: effectiveMethod,
-            url: effectivePath,
+            method: method,
+            url: url,
             data,
             ...config,
         });
-
-        // 👉 Nếu là GET, gán data vào params thay vì data
 
         return res.data;
     } catch (error) {
         throw error?.response?.data?.message || "An error occurred";
     }
 };
+
 export const get = async (url, data, config) => {
     return send("get", url, data, config);
 };

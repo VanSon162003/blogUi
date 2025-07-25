@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import Badge from "../Badge/Badge";
 import FallbackImage from "../FallbackImage/FallbackImage";
 import styles from "./BlogContent.module.scss";
+import isHttps from "../../utils/isHttps";
 
 const BlogContent = ({
     title,
@@ -64,7 +65,13 @@ const BlogContent = ({
             {thumbnail && (
                 <div className={styles.imageContainer}>
                     <FallbackImage
-                        src={thumbnail}
+                        src={
+                            isHttps(thumbnail)
+                                ? thumbnail
+                                : `${
+                                      import.meta.env.VITE_BASE_URL
+                                  }/${thumbnail}`
+                        }
                         alt={title}
                         className={styles.featuredImage}
                     />
@@ -93,7 +100,13 @@ const BlogContent = ({
                     <div className={styles.author}>
                         {user?.avatar && (
                             <FallbackImage
-                                src={user.avatar}
+                                src={
+                                    isHttps(user?.avatar)
+                                        ? user?.avatar
+                                        : `${import.meta.env.VITE_BASE_URL}/${
+                                              user?.avatar
+                                          }`
+                                }
                                 alt={user.username}
                                 className={styles.authorAvatar}
                             />
@@ -108,7 +121,8 @@ const BlogContent = ({
                                 }`}
                                 className={styles.authorName}
                             >
-                                {user?.first_name}
+                                {user?.fullname ||
+                                    `${user?.first_name} ${user?.last_name}`}
                             </Link>
                             <div className={styles.dateInfo}>
                                 <time

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
@@ -6,42 +6,38 @@ import Card from "../../components/Card/Card";
 import FallbackImage from "../../components/FallbackImage/FallbackImage";
 import styles from "./EditProfile.module.scss";
 
+import usersService from "../../services/usersService";
+// import isHttps from "../../utils/isHttps";
+import useUser from "../../hook/useUser";
+
 const EditProfile = () => {
     const navigate = useNavigate();
+    const [user, setUser] = useState(null);
 
     // Mock current user data - trong thực tế sẽ fetch từ API hoặc context
-    const currentUser = {
-        username: "john-doe",
-        name: "John Doe",
-        title: "Senior Frontend Developer",
-        bio: "Passionate about modern web development, React ecosystem, and creating amazing user experiences.",
-        avatar: "https://via.placeholder.com/120?text=JD",
-        coverImage: "https://via.placeholder.com/1200x300?text=Cover+Image",
-        location: "San Francisco, CA",
-        website: "https://johndoe.dev",
-        social: {
-            twitter: "https://twitter.com/johndoe",
-            github: "https://github.com/johndoe",
-            linkedin: "https://linkedin.com/in/johndoe",
-        },
-        skills: ["React", "TypeScript", "Node.js", "GraphQL", "AWS", "Docker"],
-    };
+    const { currentUser } = useUser();
+
+    useEffect(() => {
+        setUser(currentUser?.data);
+    }, [currentUser]);
 
     const [formData, setFormData] = useState({
-        name: currentUser?.name || "",
-        username: currentUser?.username || "",
-        title: currentUser?.title || "",
-        bio: currentUser?.bio || "",
-        location: currentUser?.location || "",
-        website: currentUser?.website || "",
-        avatar: currentUser?.avatar || "",
-        coverImage: currentUser?.coverImage || "",
+        fullname: user?.fullname || "",
+        first_name: user?.first_name || "",
+        last_name: user?.last_name || "",
+        username: user?.username || "",
+        title: user?.title || "",
+        bio: user?.about || "",
+        location: user?.location || "",
+        website_url: user?.website_url || "",
+        avatar: user?.avatar || "",
+        cover_image: user?.cover_image || "",
         social: {
-            twitter: currentUser?.social?.twitter || "",
-            github: currentUser?.social?.github || "",
-            linkedin: currentUser?.social?.linkedin || "",
+            twitter_url: user?.twitter_url || "",
+            github_url: user?.github_url || "",
+            linkedin_url: user?.linkedin_url || "",
         },
-        skills: currentUser?.skills?.join(", ") || "",
+        skills: user?.skills ? JSON.parse(user?.skills)?.join(", ") || "" : "",
         privacy: {
             profileVisibility: "public", // public, private
             showEmail: false,
@@ -52,15 +48,51 @@ const EditProfile = () => {
         },
     });
 
-    const [imageFiles, setImageFiles] = useState({
-        avatar: null,
-        coverImage: null,
-    });
+    const [imageFiles, setImageFiles] = useState({});
 
-    const [imagePreviews, setImagePreviews] = useState({
-        avatar: formData.avatar,
-        coverImage: formData.coverImage,
-    });
+    const [imagePreviews, setImagePreviews] = useState({});
+
+    console.log(formData.privacy);
+
+    useEffect(() => {
+        setFormData({
+            fullname: user?.fullname || "",
+            first_name: user?.first_name || "",
+            last_name: user?.last_name || "",
+            username: user?.username || "",
+            title: user?.title || "",
+            bio: user?.about || "",
+            location: user?.location || "",
+            website_url: user?.website_url || "",
+            avatar: user?.avatar || "",
+            cover_image: user?.cover_image || "",
+            social: {
+                twitter_url: user?.twitter_url || "",
+                github_url: user?.github_url || "",
+                linkedin_url: user?.linkedin_url || "",
+            },
+            skills: user?.skills
+                ? JSON.parse(user?.skills)?.join(", ") || ""
+                : "",
+            privacy: {
+                profileVisibility: "public", // public, private
+                showEmail: false,
+                showFollowersCount: true,
+                showFollowingCount: true,
+                allowDirectMessages: true,
+                showOnlineStatus: true,
+            },
+        });
+
+        setImagePreviews({
+            avatar: user?.avatar,
+            cover_image: user?.cover_image,
+        });
+        setImageFiles({
+            avatar: user?.avatar,
+            cover_image: user?.cover_image,
+        });
+    }, [user]);
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
@@ -148,8 +180,8 @@ const EditProfile = () => {
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.name.trim()) {
-            newErrors.name = "Name is required";
+        if (!formData.fullname.trim()) {
+            newErrors.fullname = "Fullname is required";
         }
 
         if (!formData.username.trim()) {
@@ -159,57 +191,39 @@ const EditProfile = () => {
                 "Username can only contain letters, numbers, hyphens and underscores";
         }
 
-        if (formData.website && !formData.website.startsWith("http")) {
-            newErrors.website =
+        if (formData.website_url && !formData.website_url.startsWith("http")) {
+            newErrors.website_url =
                 "Website URL must start with http:// or https://";
         }
 
         if (
-            formData.social.twitter &&
-            !formData.social.twitter.startsWith("https://twitter.com/")
+            formData.social.twitter_url &&
+            !formData.social.twitter_url.startsWith("https://twitter_url.com/")
         ) {
-            newErrors["social.twitter"] =
+            newErrors["social.twitter_url"] =
                 "Twitter URL must be a valid Twitter profile URL";
         }
 
         if (
-            formData.social.github &&
-            !formData.social.github.startsWith("https://github.com/")
+            formData.social.github_url &&
+            !formData.social.github_url.startsWith("https://github")
         ) {
-            newErrors["social.github"] =
+            newErrors["social.github_url"] =
                 "GitHub URL must be a valid GitHub profile URL";
         }
 
         if (
-            formData.social.linkedin &&
-            !formData.social.linkedin.startsWith("https://linkedin.com/")
+            formData.social.linkedin_url &&
+            !formData.social.linkedin_url.startsWith(
+                "https://linkedin_url.com/"
+            )
         ) {
-            newErrors["social.linkedin"] =
+            newErrors["social.linkedin_url"] =
                 "LinkedIn URL must be a valid LinkedIn profile URL";
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    };
-
-    const uploadImages = async () => {
-        const uploadedUrls = { ...imagePreviews };
-
-        // Upload avatar if new file selected
-        if (imageFiles.avatar) {
-            // Simulate upload - in real app, upload to your storage service
-            console.log("Uploading avatar:", imageFiles.avatar);
-            // uploadedUrls.avatar = await uploadToStorage(imageFiles.avatar);
-        }
-
-        // Upload cover image if new file selected
-        if (imageFiles.coverImage) {
-            // Simulate upload - in real app, upload to your storage service
-            console.log("Uploading cover image:", imageFiles.coverImage);
-            // uploadedUrls.coverImage = await uploadToStorage(imageFiles.coverImage);
-        }
-
-        return uploadedUrls;
     };
 
     const handleSubmit = async (e) => {
@@ -222,24 +236,64 @@ const EditProfile = () => {
         setLoading(true);
 
         try {
-            // Upload images first
-            const imageUrls = await uploadImages();
+            // Tạo FormData để gửi cả file và text data
+            const formDataToSend = new FormData();
 
-            // Prepare data for submission
-            const submitData = {
-                ...formData,
-                avatar: imageUrls.avatar,
-                coverImage: imageUrls.coverImage,
-                skills: formData.skills
-                    .split(",")
-                    .map((skill) => skill.trim())
-                    .filter((skill) => skill.length > 0),
-            };
+            // Thêm files nếu có
+            if (imageFiles.avatar) {
+                formDataToSend.append("avatar", imageFiles.avatar);
+            }
 
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            if (imageFiles.cover_image) {
+                formDataToSend.append("cover_image", imageFiles.cover_image);
+            }
 
-            console.log("Profile updated successfully:", submitData);
+            // Thêm text data
+            formDataToSend.append(
+                "fullname",
+                formData.fullname ||
+                    `${formData.first_name} ${formData.last_name}`
+            );
+            formDataToSend.append("username", formData.username);
+            formDataToSend.append("title", formData.title);
+            formDataToSend.append("about", formData.bio);
+            formDataToSend.append("location", formData.location);
+            formDataToSend.append("website_url", formData.website_url);
+
+            // Thêm social links (convert object thành JSON string)
+            // formDataToSend.append("social", JSON.stringify(formData.social));
+
+            formDataToSend.append("twitter_url", formData.social.twitter_url);
+            formDataToSend.append("github_url", formData.social.github_url);
+            formDataToSend.append("linkedin_url", formData.social.linkedin_url);
+
+            // Thêm skills (convert array)
+            const skillsArray = formData.skills
+                .split(",")
+                .map((skill) => skill.trim())
+                .filter((skill) => skill.length > 0);
+            formDataToSend.append("skills", JSON.stringify(skillsArray));
+
+            // Thêm privacy settings
+            formDataToSend.append("privacy", JSON.stringify(formData.privacy));
+
+            // Debug FormData
+            console.log("Sending data:");
+            for (let pair of formDataToSend.entries()) {
+                if (pair[1] instanceof File) {
+                    console.log(`${pair[0]}:`, {
+                        name: pair[1].name,
+                        size: pair[1].size,
+                        type: pair[1].type,
+                    });
+                } else {
+                    console.log(`${pair[0]}: ${pair[1]}`);
+                }
+            }
+
+            const result = await usersService.editProfile(formDataToSend);
+
+            console.log("Response:", result);
 
             // Navigate back to profile with success message
             navigate(`/profile/${formData.username}`, {
@@ -281,25 +335,39 @@ const EditProfile = () => {
                                 <div className={styles.imagePreview}>
                                     <div className={styles.coverPreview}>
                                         <FallbackImage
-                                            src={imagePreviews.coverImage}
+                                            src={
+                                                imagePreviews.cover_image?.startsWith(
+                                                    "http"
+                                                ) ||
+                                                imagePreviews.cover_image?.startsWith(
+                                                    "data:"
+                                                )
+                                                    ? imagePreviews.cover_image
+                                                    : `${
+                                                          import.meta.env
+                                                              .VITE_BASE_URL
+                                                      }/${
+                                                          imagePreviews.cover_image
+                                                      }`
+                                            }
                                             alt="Cover preview"
                                             className={styles.coverImg}
                                         />
                                         <div className={styles.imageUpload}>
                                             <input
                                                 type="file"
-                                                id="coverImage"
+                                                id="cover_image"
                                                 accept="image/*"
                                                 onChange={(e) =>
                                                     handleImageChange(
-                                                        "coverImage",
+                                                        "cover_image",
                                                         e
                                                     )
                                                 }
                                                 className={styles.fileInput}
                                             />
                                             <label
-                                                htmlFor="coverImage"
+                                                htmlFor="cover_image"
                                                 className={styles.uploadButton}
                                             >
                                                 📷 Change Cover
@@ -308,16 +376,28 @@ const EditProfile = () => {
                                         <span className={styles.imageLabel}>
                                             Cover Image
                                         </span>
-                                        {errors.coverImage && (
+                                        {errors.cover_image && (
                                             <div className={styles.imageError}>
-                                                {errors.coverImage}
+                                                {errors.cover_image}
                                             </div>
                                         )}
                                     </div>
 
                                     <div className={styles.avatarPreview}>
                                         <FallbackImage
-                                            src={imagePreviews.avatar}
+                                            src={
+                                                imagePreviews.avatar?.startsWith(
+                                                    "http"
+                                                ) ||
+                                                imagePreviews.avatar?.startsWith(
+                                                    "data:"
+                                                )
+                                                    ? imagePreviews.avatar
+                                                    : `${
+                                                          import.meta.env
+                                                              .VITE_BASE_URL
+                                                      }/${imagePreviews.avatar}`
+                                            }
                                             alt="Avatar preview"
                                             className={styles.avatarImg}
                                         />
@@ -372,10 +452,13 @@ const EditProfile = () => {
                             <div className={styles.grid}>
                                 <Input
                                     label="Full Name"
-                                    value={formData.name}
+                                    value={
+                                        formData?.fullname ||
+                                        `${formData?.first_name} ${formData?.last_name}`
+                                    }
                                     onChange={(e) =>
                                         handleInputChange(
-                                            "name",
+                                            "fullname",
                                             e.target.value
                                         )
                                     }
@@ -442,15 +525,15 @@ const EditProfile = () => {
                                 />
                                 <Input
                                     label="Website"
-                                    value={formData.website}
+                                    value={formData.website_url}
                                     onChange={(e) =>
                                         handleInputChange(
-                                            "website",
+                                            "website_url",
                                             e.target.value
                                         )
                                     }
-                                    placeholder="https://yourwebsite.com"
-                                    error={errors.website}
+                                    placeholder="https://yourwebsite_url.com"
+                                    error={errors.website_url}
                                     fullWidth
                                 />
                             </div>
@@ -461,41 +544,41 @@ const EditProfile = () => {
                             <h3>Social Links</h3>
                             <Input
                                 label="Twitter"
-                                value={formData.social.twitter}
+                                value={formData?.social?.twitter_url}
                                 onChange={(e) =>
                                     handleInputChange(
-                                        "social.twitter",
+                                        "social.twitter_url",
                                         e.target.value
                                     )
                                 }
-                                placeholder="https://twitter.com/username"
-                                error={errors["social.twitter"]}
+                                placeholder="https://twitter_url.com/username"
+                                error={errors["social.twitter_url"]}
                                 fullWidth
                             />
                             <Input
                                 label="GitHub"
-                                value={formData.social.github}
+                                value={formData?.social?.github_url}
                                 onChange={(e) =>
                                     handleInputChange(
-                                        "social.github",
+                                        "social.github_url",
                                         e.target.value
                                     )
                                 }
-                                placeholder="https://github.com/username"
-                                error={errors["social.github"]}
+                                placeholder="https://github_url.com/username"
+                                error={errors["social.github_url"]}
                                 fullWidth
                             />
                             <Input
                                 label="LinkedIn"
-                                value={formData.social.linkedin}
+                                value={formData?.social?.linkedin_url}
                                 onChange={(e) =>
                                     handleInputChange(
-                                        "social.linkedin",
+                                        "social.linkedin_url",
                                         e.target.value
                                     )
                                 }
-                                placeholder="https://linkedin.com/in/username"
-                                error={errors["social.linkedin"]}
+                                placeholder="https://linkedin_url.com/in/username"
+                                error={errors["social.linkedin_url"]}
                                 fullWidth
                             />
                         </div>
@@ -534,7 +617,7 @@ const EditProfile = () => {
                                     </div>
                                     <select
                                         value={
-                                            formData.privacy.profileVisibility
+                                            formData?.privacy?.profileVisibility
                                         }
                                         onChange={(e) =>
                                             handleInputChange(
@@ -564,7 +647,7 @@ const EditProfile = () => {
                                     </div>
                                     <input
                                         type="checkbox"
-                                        checked={formData.privacy.showEmail}
+                                        checked={formData?.privacy?.showEmail}
                                         onChange={(e) =>
                                             handleInputChange(
                                                 "privacy.showEmail",
@@ -592,7 +675,8 @@ const EditProfile = () => {
                                     <input
                                         type="checkbox"
                                         checked={
-                                            formData.privacy.showFollowersCount
+                                            formData?.privacy
+                                                ?.showFollowersCount
                                         }
                                         onChange={(e) =>
                                             handleInputChange(
@@ -620,7 +704,8 @@ const EditProfile = () => {
                                     <input
                                         type="checkbox"
                                         checked={
-                                            formData.privacy.showFollowingCount
+                                            formData?.privacy
+                                                ?.showFollowingCount
                                         }
                                         onChange={(e) =>
                                             handleInputChange(
@@ -649,7 +734,8 @@ const EditProfile = () => {
                                     <input
                                         type="checkbox"
                                         checked={
-                                            formData.privacy.allowDirectMessages
+                                            formData?.privacy
+                                                ?.allowDirectMessages
                                         }
                                         onChange={(e) =>
                                             handleInputChange(
@@ -678,7 +764,7 @@ const EditProfile = () => {
                                     <input
                                         type="checkbox"
                                         checked={
-                                            formData.privacy.showOnlineStatus
+                                            formData?.privacy?.showOnlineStatus
                                         }
                                         onChange={(e) =>
                                             handleInputChange(

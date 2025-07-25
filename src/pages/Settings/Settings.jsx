@@ -5,6 +5,8 @@ import Input from "../../components/Input/Input";
 import Card from "../../components/Card/Card";
 import Badge from "../../components/Badge/Badge";
 import styles from "./Settings.module.scss";
+import { toast } from "react-toastify";
+import authService from "../../services/authService";
 
 const Settings = () => {
     const navigate = useNavigate();
@@ -16,7 +18,7 @@ const Settings = () => {
     // Settings State
     const [settings, setSettings] = useState({
         // Account
-        email: "john.doe@example.com",
+        email: "",
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
@@ -55,15 +57,16 @@ const Settings = () => {
 
     const handlePasswordChange = async (e) => {
         e.preventDefault();
+
         if (settings.newPassword !== settings.confirmPassword) {
-            setMessage("Passwords don't match");
+            toast.error("Passwords don't match");
             return;
         }
 
         setLoading(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            setMessage("Password updated successfully!");
+            await authService.resetPassword(settings);
+            toast.success("Password updated successfully!");
             setSettings((prev) => ({
                 ...prev,
                 currentPassword: "",
@@ -71,13 +74,15 @@ const Settings = () => {
                 confirmPassword: "",
             }));
         } catch (error) {
-            setMessage("Failed to update password");
+            toast.error(error);
         } finally {
             setLoading(false);
         }
     };
 
     const handleSaveSettings = async () => {
+        console.log(settings);
+
         setLoading(true);
         try {
             await new Promise((resolve) => setTimeout(resolve, 1000));

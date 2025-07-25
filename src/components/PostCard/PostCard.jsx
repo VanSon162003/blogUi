@@ -6,6 +6,7 @@ import Badge from "../Badge/Badge";
 import FallbackImage from "../FallbackImage/FallbackImage";
 import styles from "./PostCard.module.scss";
 import { toast } from "react-toastify";
+import isHttps from "../../utils/isHttps";
 
 const PostCard = ({
     id,
@@ -60,10 +61,10 @@ const PostCard = ({
             setOptimisticLikes(
                 optimisticLiked ? optimisticLikes - 1 : optimisticLikes + 1
             );
-            if (check.data) toast.success("You liked this post ❤️");
+            if (check?.data) toast.success("You liked this post ❤️");
             else toast.success("You unliked this post 💔");
         } catch (error) {
-            toast.error(error.message);
+            toast.error(error?.message);
 
             // Revert on error
             setOptimisticLiked(optimisticLiked);
@@ -84,12 +85,13 @@ const PostCard = ({
 
             // Optimistic update
             setOptimisticBookmarked(!optimisticBookmarked);
-            console.log(check);
 
-            if (Array.isArray(check.data))
+            if (Array.isArray(check?.data))
                 toast.success("You bookmarked this post.");
             else toast.success("You removed this post from your bookmarks.");
         } catch (error) {
+            console.log(error);
+
             // Revert on error
             setOptimisticBookmarked(optimisticBookmarked);
             toast.error(error.message);
@@ -133,7 +135,13 @@ const PostCard = ({
             <div className={styles.imageContainer}>
                 <Link to={`/blog/${slug}`}>
                     <FallbackImage
-                        src={featuredImage}
+                        src={
+                            isHttps(featuredImage)
+                                ? featuredImage
+                                : `${
+                                      import.meta.env.VITE_BASE_URL
+                                  }/${featuredImage}`
+                        }
                         alt={title}
                         className={styles.image}
                         lazy={true}
@@ -171,7 +179,13 @@ const PostCard = ({
                     <div className={styles.author}>
                         {user?.avatar && (
                             <FallbackImage
-                                src={user.avatar}
+                                src={
+                                    isHttps(user?.avatar)
+                                        ? user?.avatar
+                                        : `${import.meta.env.VITE_BASE_URL}/${
+                                              user?.avatar
+                                          }`
+                                }
                                 alt={user.username}
                                 className={styles.authorAvatar}
                                 lazy={true}
@@ -186,7 +200,8 @@ const PostCard = ({
                             }`}
                             className={styles.authorName}
                         >
-                            {`${user?.first_name} ${user?.last_name}`}
+                            {user?.fullname ||
+                                `${user?.first_name} ${user?.last_name}`}
                         </Link>
                     </div>
 
@@ -346,8 +361,9 @@ PostCard.propTypes = {
     title: PropTypes.string.isRequired,
     excerpt: PropTypes.string,
     user: PropTypes.shape({
-        first_name: PropTypes.string.isRequired,
-        last_name: PropTypes.string.isRequired,
+        fullname: PropTypes.string,
+        first_name: PropTypes.string,
+        last_name: PropTypes.string,
         avatar: PropTypes.string,
         username: PropTypes.string,
     }).isRequired,

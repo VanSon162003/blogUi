@@ -124,19 +124,29 @@ const CommentSection = ({
                         description="Be the first to share your thoughts!"
                     />
                 ) : (
-                    comments.map((comment) => (
-                        <CommentItem
-                            key={comment.id}
-                            comment={comment}
-                            onReply={isAuthenticated ? handleReply : undefined}
-                            onLike={isAuthenticated ? onLikeComment : undefined}
-                            onEdit={isAuthenticated ? onEditComment : undefined}
-                            onDelete={
-                                isAuthenticated ? onDeleteComment : undefined
-                            }
-                            showActions={isAuthenticated}
-                        />
-                    ))
+                    comments.map((comment) => {
+                        return (
+                            <CommentItem
+                                key={comment.id}
+                                comment={comment}
+                                onReply={
+                                    isAuthenticated ? handleReply : undefined
+                                }
+                                onLike={
+                                    isAuthenticated ? onLikeComment : undefined
+                                }
+                                onEdit={
+                                    isAuthenticated ? onEditComment : undefined
+                                }
+                                onDelete={
+                                    isAuthenticated
+                                        ? onDeleteComment
+                                        : undefined
+                                }
+                                showActions={isAuthenticated}
+                            />
+                        );
+                    })
                 )}
             </div>
 

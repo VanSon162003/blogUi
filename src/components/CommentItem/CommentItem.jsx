@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import Button from "../Button/Button";
 import FallbackImage from "../FallbackImage/FallbackImage";
 import styles from "./CommentItem.module.scss";
+import isHttps from "../../utils/isHttps";
+import useUser from "../../hook/useUser";
 
 const CommentItem = ({
     comment,
@@ -24,23 +26,27 @@ const CommentItem = ({
     const [editText, setEditText] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isShowEdit, setIsShowEdit] = useState(false);
     const dropdownRef = useRef(null);
 
-    const updatedAt = new Date(comment?.updated_at);
-    const createdAt = new Date(comment?.created_at);
+    const { currentUser } = useUser();
 
-    const isEdit = updatedAt.getTime() !== createdAt.getTime();
+    useEffect(() => {
+        setIsShowEdit(comment?.user?.id === currentUser?.data?.id);
+    }, [currentUser, comment]);
 
     const {
         id,
         user,
         content,
         created_at,
+        edited_at,
         like_count = 0,
         is_like = false,
         replies = [],
-        isEdited = isEdit,
     } = comment;
+
+    const isEdited = Boolean(edited_at);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -138,7 +144,16 @@ const CommentItem = ({
             <div className={styles.comment}>
                 {/* Avatar */}
                 <div className={styles.avatar}>
-                    <FallbackImage src={user.avatar} alt={user.username} />
+                    <FallbackImage
+                        src={
+                            isHttps(user?.avatar)
+                                ? user?.avatar
+                                : `${import.meta.env.VITE_BASE_URL}/${
+                                      user?.avatar
+                                  }`
+                        }
+                        alt={user.username}
+                    />
                 </div>
 
                 {/* Content */}
@@ -155,7 +170,8 @@ const CommentItem = ({
                                 }`}
                                 className={styles.authorName}
                             >
-                                {`${user.first_name} ${user.last_name}`}
+                                {user?.fullname ||
+                                    `${user?.first_name} ${user?.last_name}`}
                             </Link>
                             <time className={styles.date} dateTime={created_at}>
                                 {formatDate(created_at)}
@@ -166,7 +182,7 @@ const CommentItem = ({
                         </div>
 
                         {/* Actions Dropdown - Only show if user can edit/delete */}
-                        {showActions && (onEdit || onDelete) && (
+                        {showActions && isShowEdit && (onEdit || onDelete) && (
                             <div
                                 className={styles.actionsDropdown}
                                 ref={dropdownRef}
@@ -390,19 +406,21 @@ const CommentItem = ({
             {/* Replies */}
             {replies.length > 0 && (
                 <div className={styles.replies}>
-                    {replies.map((reply) => (
-                        <CommentItem
-                            key={reply.id}
-                            comment={reply}
-                            level={level + 1}
-                            maxLevel={maxLevel}
-                            onReply={onReply}
-                            onLike={onLike}
-                            onEdit={onEdit}
-                            onDelete={onDelete}
-                            showActions={showActions}
-                        />
-                    ))}
+                    {replies.map((reply) => {
+                        return (
+                            <CommentItem
+                                key={reply.id}
+                                comment={reply}
+                                level={level + 1}
+                                maxLevel={maxLevel}
+                                onReply={onReply}
+                                onLike={onLike}
+                                onEdit={onEdit}
+                                onDelete={onDelete}
+                                showActions={showActions}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </div>
@@ -423,7 +441,6 @@ CommentItem.propTypes = {
         like_count: PropTypes.number,
         is_like: PropTypes.bool,
         replies: PropTypes.array,
-        isEdited: PropTypes.bool,
     }).isRequired,
     level: PropTypes.number,
     maxLevel: PropTypes.number,

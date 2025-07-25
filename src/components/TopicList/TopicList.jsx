@@ -4,6 +4,7 @@ import Badge from "../Badge/Badge";
 import EmptyState from "../EmptyState/EmptyState";
 import FallbackImage from "../FallbackImage/FallbackImage";
 import styles from "./TopicList.module.scss";
+import isHttps from "../../utils/isHttps";
 
 const TopicList = ({
     topics = [],
@@ -57,7 +58,14 @@ const TopicList = ({
                             {topic.image && (
                                 <div className={styles.iconContainer}>
                                     <FallbackImage
-                                        src={topic.image}
+                                        src={
+                                            isHttps(topic.image)
+                                                ? topic.image
+                                                : `${
+                                                      import.meta.env
+                                                          .VITE_BASE_URL
+                                                  }/${topic.image}`
+                                        }
                                         alt={topic.name}
                                         className={styles.image}
                                     />

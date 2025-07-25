@@ -4,6 +4,7 @@ import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import FallbackImage from "../../components/FallbackImage/FallbackImage";
 import styles from "./DirectMessages.module.scss";
+import isHttps from "../../utils/isHttps";
 
 const DirectMessages = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -267,7 +268,20 @@ const DirectMessages = () => {
                             >
                                 <div className={styles.avatarContainer}>
                                     <FallbackImage
-                                        src={conversation.participant.avatar}
+                                        src={
+                                            isHttps(
+                                                conversation.participant.avatar
+                                            )
+                                                ? conversation.participant
+                                                      .avatar
+                                                : `${
+                                                      import.meta.env
+                                                          .VITE_BASE_URL
+                                                  }/${
+                                                      conversation.participant
+                                                          .avatar
+                                                  }`
+                                        }
                                         alt={conversation.participant.name}
                                         className={styles.avatar}
                                     />
@@ -319,8 +333,19 @@ const DirectMessages = () => {
                                 <div className={styles.participantInfo}>
                                     <FallbackImage
                                         src={
-                                            selectedConversation.participant
-                                                .avatar
+                                            isHttps(
+                                                selectedConversation.participant
+                                                    .avatar
+                                            )
+                                                ? selectedConversation
+                                                      .participant.avatar
+                                                : `${
+                                                      import.meta.env
+                                                          .VITE_BASE_URL
+                                                  }/${
+                                                      selectedConversation
+                                                          .participant.avatar
+                                                  }`
                                         }
                                         alt={
                                             selectedConversation.participant

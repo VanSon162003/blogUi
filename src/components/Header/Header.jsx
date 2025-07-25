@@ -6,6 +6,7 @@ import FallbackImage from "../FallbackImage/FallbackImage";
 import NotificationDropdown from "../NotificationDropdown/NotificationDropdown";
 import styles from "./Header.module.scss";
 import useUser from "../../hook/useUser";
+import isHttps from "../../utils/isHttps";
 
 const Header = () => {
     // Mock authentication state - trong thực tế sẽ từ context/store
@@ -185,12 +186,20 @@ const Header = () => {
                                         aria-haspopup="true"
                                     >
                                         <FallbackImage
-                                            src={user?.avatar}
-                                            alt={user?.name}
+                                            src={
+                                                isHttps(user?.avatar)
+                                                    ? user?.avatar
+                                                    : `${
+                                                          import.meta.env
+                                                              .VITE_BASE_URL
+                                                      }/${user?.avatar}`
+                                            }
+                                            alt={user?.username}
                                             className={styles.userAvatar}
                                         />
                                         <span className={styles.userName}>
-                                            {user?.name}
+                                            {user?.fullname ||
+                                                `${user?.first_name} ${user?.last_name}`}
                                         </span>
                                         <svg
                                             className={`${styles.chevron} ${
@@ -230,7 +239,8 @@ const Header = () => {
                                                             styles.dropdownUserName
                                                         }
                                                     >
-                                                        {user?.name}
+                                                        {user?.fullname ||
+                                                            `${user?.first_name} ${user?.last_name}`}
                                                     </div>
                                                     <div
                                                         className={
@@ -244,7 +254,7 @@ const Header = () => {
                                                             styles.dropdownUserRole
                                                         }
                                                     >
-                                                        {user?.role}
+                                                        {user?.role ?? "Author"}
                                                     </div>
                                                 </div>
                                             </div>
@@ -450,7 +460,14 @@ const Header = () => {
                             <div className={styles.mobileUserMenu}>
                                 <div className={styles.mobileUserInfo}>
                                     <FallbackImage
-                                        src={user?.avatar}
+                                        src={
+                                            isHttps(user?.avatar)
+                                                ? user?.avatar
+                                                : `${
+                                                      import.meta.env
+                                                          .VITE_BASE_URL
+                                                  }/${user?.avatar}`
+                                        }
                                         alt={user?.name}
                                         className={styles.mobileUserAvatar}
                                     />
