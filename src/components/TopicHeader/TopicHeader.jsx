@@ -64,7 +64,7 @@ const TopicHeader = ({ topic, loading = false, className, ...props }) => {
 
                     <div className={styles.meta}>
                         <Badge variant="primary" size="md">
-                            {topic.postCount || 0} posts
+                            {topic.posts_count || 0} posts
                         </Badge>
 
                         {topic.createdAt && (

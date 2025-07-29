@@ -4,6 +4,7 @@ import CommentItem from "../CommentItem/CommentItem";
 import Button from "../Button/Button";
 import EmptyState from "../EmptyState/EmptyState";
 import styles from "./CommentSection.module.scss";
+import { toast } from "react-toastify";
 
 const CommentSection = ({
     comments = [],
@@ -32,6 +33,7 @@ const CommentSection = ({
             }
         } catch (error) {
             console.error("Failed to add comment:", error);
+            toast.error(error);
         } finally {
             setIsSubmitting(false);
         }

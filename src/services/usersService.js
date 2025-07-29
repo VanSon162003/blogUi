@@ -22,9 +22,15 @@ export const toggleFollower = async (userId) => {
     return result;
 };
 
+export const settings = async (data) => {
+    const result = await httpRequest.post(`/users/settings`, data);
+    return result;
+};
+
 export default {
     checkFollower,
     toggleFollower,
     getUserByUsername,
     editProfile,
+    settings,
 };

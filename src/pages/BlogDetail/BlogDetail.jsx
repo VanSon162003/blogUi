@@ -35,6 +35,14 @@ const BlogDetail = () => {
     const { currentUser } = useUser();
 
     useEffect(() => {
+        (async () => {
+            if (post) {
+                await postsService.updateViews(post.id);
+            }
+        })();
+    }, [post]);
+
+    useEffect(() => {
         // Simulate API call
         const loadPost = async () => {
             setLoading(true);

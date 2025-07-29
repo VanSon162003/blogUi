@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
@@ -12,6 +13,9 @@ import messageService from "../../services/messageService";
 import useUser from "../../hook/useUser";
 import isHttps from "../../utils/isHttps";
 
+import chatRealtimeService from "../../services/chatRealtimeService";
+import { toast } from "react-toastify";
+
 const ChatWindow = ({
     user,
     isOpen = false,
@@ -24,10 +28,11 @@ const ChatWindow = ({
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState([]);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [channelName, setChannelName] = useState(null);
     const messagesEndRef = useRef(null);
     const menuRef = useRef(null);
 
-    // useUser();
+    const { currentUser } = useUser();
 
     // Mock messages for demonstration
     // const mockMessages = [
@@ -111,42 +116,76 @@ const ChatWindow = ({
     //     },
     // ];
 
-    const nameSub = "son";
+    useEffect(() => {
+        (async () => {
+            try {
+                if (currentUser?.data) {
+                    if (currentUser.data.id === user.id) return;
+
+                    await conversationService.create({
+                        user1: currentUser.data.id,
+                        user2: user.id,
+                    });
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        })();
+    }, [currentUser, user]);
 
     useEffect(() => {
         (async () => {
-            const conversation =
-                await conversationService.getConversationByName(nameSub);
+            try {
+                if (channelName) {
+                    const conversation =
+                        await conversationService.getConversationByName(
+                            channelName
+                        );
 
-            const dataMessage =
-                await messageService.getAllMessageByConversationId(
-                    conversation.data.id
-                );
+                    const dataMessage =
+                        await messageService.getAllMessageByConversationId(
+                            conversation.data.id
+                        );
 
-            setMessages(dataMessage.data);
+                    setMessages(dataMessage.data);
+                }
+            } catch (error) {
+                console.log(error);
+            }
         })();
-    }, []);
+    }, [channelName]);
 
     useEffect(() => {
-        const channel = socketClient.subscribe(nameSub);
-        channel.bind("new-message", function (data) {
-            setMessages((prev) => [
-                ...prev,
-                {
-                    content: data.message,
-                    createdAt: Date.now(),
-                },
-            ]);
-        });
+        if (currentUser?.data) {
+            if (currentUser.data.id === user.id) return;
 
-        // (async () => {
-        //     await chatRealtimeService.sendMessage({});
-        // })();
+            const ids = [currentUser.data.id, user.id].sort((a, b) => a - b);
+            const name = `private_${ids[0]}_${ids[1]}`;
 
-        return () => {
-            channel.unsubscribe();
-        };
-    }, []);
+            setChannelName(name);
+
+            const channel = socketClient.subscribe(name);
+
+            channel.bind("new-message", function (data) {
+                if (data.user_id !== currentUser.data.id) {
+                    setMessages((prev) => [
+                        ...prev,
+                        {
+                            id: data.id,
+                            content: data.content,
+                            user_id: data.user_id,
+                            conversation_id: data.conversation_id,
+                            createdAt: data.createdAt,
+                        },
+                    ]);
+                }
+            });
+
+            return () => {
+                channel.unsubscribe();
+            };
+        }
+    }, [currentUser, user]);
 
     // Scroll to bottom when window opens or when new messages arrive
     useEffect(() => {
@@ -212,13 +251,23 @@ const ChatWindow = ({
     const handleSendMessage = (e) => {
         e.preventDefault();
         if (message.trim()) {
-            const newMessage = {
-                content: message.trim(),
-                sender_id: 16,
-                createdAt: new Date().toISOString(),
-            };
-            setMessages([...messages, newMessage]);
-            setMessage("");
+            (async () => {
+                try {
+                    const { data: newMessage } =
+                        await chatRealtimeService.sendMessage({
+                            channel: channelName,
+                            message: message.trim(),
+                        });
+
+                    // Thêm tin nhắn vào state ngay lập tức cho người gửi
+                    setMessages((prev) => [...prev, newMessage]);
+                    setMessage("");
+                } catch (error) {
+                    toast.error(
+                        error.message || "Có lỗi xảy ra khi gửi tin nhắn"
+                    );
+                }
+            })();
         }
     };
 
@@ -250,10 +299,10 @@ const ChatWindow = ({
                             ? user?.avatar
                             : `${import.meta.env.VITE_BASE_URL}/${user?.avatar}`
                     }
-                    alt={user?.username}
+                    alt={user?.fullname}
                     className={styles.minimizedAvatar}
                 />
-                <span className={styles.minimizedName}>{user?.username}</span>
+                <span className={styles.minimizedName}>{user?.fullname}</span>
             </div>
         );
     }
@@ -271,11 +320,11 @@ const ChatWindow = ({
                                       user?.avatar
                                   }`
                         }
-                        alt={user?.username}
+                        alt={user?.fullname}
                         className={styles.avatar}
                     />
                     <div className={styles.userDetails}>
-                        <span className={styles.name}>{user?.username}</span>
+                        <span className={styles.name}>{user?.fullname}</span>
                         <span className={styles.status}>
                             Hoạt động 5 phút trước
                         </span>
@@ -356,21 +405,27 @@ const ChatWindow = ({
 
             {/* Messages */}
             <div className={styles.messages}>
-                {messages.map((msg, i) => (
-                    <div
-                        key={i}
-                        className={`${styles.message} ${
-                            msg.sender_id === 16 ? styles.own : styles.other
-                        }`}
-                    >
-                        <div className={styles.messageContent}>
-                            <p className={styles.messageText}>{msg.content}</p>
-                            <span className={styles.messageTime}>
-                                {formatTime(msg.createdAt)}
-                            </span>
+                {messages.map((msg, i) => {
+                    return (
+                        <div
+                            key={i}
+                            className={`${styles.message} ${
+                                msg?.user_id === currentUser?.data.id
+                                    ? styles.own
+                                    : styles.other
+                            }`}
+                        >
+                            <div className={styles.messageContent}>
+                                <p className={styles.messageText}>
+                                    {msg.content}
+                                </p>
+                                <span className={styles.messageTime}>
+                                    {formatTime(msg.createdAt)}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
                 <div ref={messagesEndRef} />
             </div>
 

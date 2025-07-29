@@ -68,10 +68,10 @@ const Header = () => {
     const unreadCount = notifications.filter((n) => !n.read).length;
 
     // Toggle auth state for demo (remove in production)
-    const toggleAuth = () => {
-        setIsAuthenticated(!isAuthenticated);
-        setIsDropdownOpen(false);
-    };
+    // const toggleAuth = () => {
+    //     setIsAuthenticated(!isAuthenticated);
+    //     setIsDropdownOpen(false);
+    // };
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -108,6 +108,9 @@ const Header = () => {
     }, []);
 
     const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("refresh_token");
+
         setIsAuthenticated(false);
         setUser(null);
         setIsDropdownOpen(false);
@@ -391,13 +394,13 @@ const Header = () => {
                         )}
 
                         {/* Demo Toggle Button (remove in production) */}
-                        <button
+                        {/* <button
                             onClick={toggleAuth}
                             className={styles.demoToggle}
                             title="Toggle auth state (demo)"
                         >
                             🔄
-                        </button>
+                        </button> */}
                     </div>
 
                     {/* Mobile Menu Toggle */}

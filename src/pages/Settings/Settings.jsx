@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { data, useNavigate } from "react-router-dom";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Card from "../../components/Card/Card";
@@ -7,6 +7,8 @@ import Badge from "../../components/Badge/Badge";
 import styles from "./Settings.module.scss";
 import { toast } from "react-toastify";
 import authService from "../../services/authService";
+import usersService from "../../services/usersService";
+import useUser from "../../hook/useUser";
 
 const Settings = () => {
     const navigate = useNavigate();
@@ -43,6 +45,67 @@ const Settings = () => {
         searchEngineIndexing: true,
         showEmail: false,
     });
+
+    const { currentUser } = useUser();
+
+    useEffect(() => {
+        if (currentUser) {
+            const userSettings = JSON.parse(
+                currentUser?.data?.settings?.data || null
+            );
+
+            setSettings((prev) => {
+                return {
+                    // Account
+                    email: currentUser.data.email,
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: "",
+                    twoFactorEnabled:
+                        userSettings?.twoFactorEnabled || prev.twoFactorEnabled,
+
+                    // Content
+                    defaultPostVisibility:
+                        userSettings?.defaultPostVisibility ||
+                        prev.defaultPostVisibility,
+                    allowComments:
+                        userSettings?.allowComments || prev.allowComments,
+                    requireCommentApproval:
+                        userSettings?.requireCommentApproval ||
+                        prev.requireCommentApproval,
+                    showViewCounts:
+                        userSettings?.showViewCounts || prev.showViewCounts,
+
+                    // Notifications
+                    emailNewComments:
+                        userSettings?.emailNewComments || prev.emailNewComments,
+                    emailNewLikes:
+                        userSettings?.emailNewLikes || prev.emailNewLikes,
+                    emailNewFollowers:
+                        userSettings?.emailNewFollowers ||
+                        prev.emailNewFollowers,
+                    emailWeeklyDigest:
+                        userSettings?.emailWeeklyDigest ||
+                        prev.emailWeeklyDigest,
+                    pushNotifications:
+                        userSettings?.pushNotifications ||
+                        prev.pushNotifications,
+
+                    // Privacy
+                    profileVisibility:
+                        userSettings?.profileVisibility ||
+                        prev.profileVisibility,
+                    allowDirectMessages:
+                        userSettings?.allowDirectMessages ||
+                        prev.allowDirectMessages,
+                    searchEngineIndexing:
+                        userSettings?.searchEngineIndexing ||
+                        prev.searchEngineIndexing,
+                    showEmail: userSettings?.showEmail || prev.showEmail,
+                };
+            });
+        }
+    }, [currentUser]);
 
     const settingsSections = [
         { id: "account", label: "Account", icon: "👤" },
@@ -82,10 +145,12 @@ const Settings = () => {
 
     const handleSaveSettings = async () => {
         console.log(settings);
+        const { currentPassword, newPassword, confirmPassword, ...data } =
+            settings;
 
         setLoading(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await usersService.settings(data);
             setMessage("Settings saved successfully!");
         } catch (error) {
             setMessage("Failed to save settings");

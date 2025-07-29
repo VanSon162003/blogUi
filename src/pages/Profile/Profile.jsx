@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AuthorInfo from "../../components/AuthorInfo/AuthorInfo";
@@ -38,6 +39,11 @@ const Profile = () => {
     useEffect(() => {
         (async () => {
             const response = await usersService.getUserByUsername(username);
+
+            if (response?.data?.canView === false) {
+                setUser({ ...response.data });
+                return;
+            }
 
             if (!response?.success || !response?.data) return;
 
@@ -86,6 +92,8 @@ const Profile = () => {
     }, [user]);
 
     useEffect(() => {
+        if (profile?.canView === false) return;
+
         const loadPosts = async () => {
             setPostsLoading(true);
             // Simulate API delay
@@ -163,6 +171,182 @@ const Profile = () => {
                         description="The user profile you're looking for doesn't exist or has been removed."
                         icon="👤"
                     />
+                </div>
+            </div>
+        );
+    }
+
+    if (profile?.canView === false) {
+        if (profile.type === "followers") {
+            return (
+                <div className="container">
+                    <div className={styles.privateProfile}>
+                        <div className={styles.privateContent}>
+                            <div className={styles.lockIcon}>🔒</div>
+                            <h2 className={styles.privateTitle}>
+                                This profile is private
+                            </h2>
+                            <p className={styles.privateDescription}>
+                                Only followers can see{" "}
+                                {user.first_name || user.username}'s posts and
+                                activity.
+                            </p>
+
+                            {!isFollow && !isOwnProfile && (
+                                <div className={styles.privateActions}>
+                                    <Button
+                                        onClick={handleFollow}
+                                        variant="primary"
+                                        size="md"
+                                    >
+                                        Follow to see posts
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="md"
+                                        onClick={handleMessageClick}
+                                    >
+                                        Send Message
+                                    </Button>
+                                </div>
+                            )}
+
+                            {isFollow && !isOwnProfile && (
+                                <div className={styles.privateActions}>
+                                    <p className={styles.followingText}>
+                                        <span className={styles.checkIcon}>
+                                            ✓
+                                        </span>
+                                        You're following{" "}
+                                        {user.first_name || user.username}
+                                    </p>
+                                    <p className={styles.waitingText}>
+                                        Waiting for them to accept your follow
+                                        request...
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className={styles.basicProfileInfo}>
+                                <div className={styles.miniAvatar}>
+                                    <FallbackImage
+                                        src={
+                                            isHttps(user?.avatar)
+                                                ? user?.avatar
+                                                : `${
+                                                      import.meta.env
+                                                          .VITE_BASE_URL
+                                                  }/${user?.avatar}`
+                                        }
+                                        alt={user?.username}
+                                    />
+                                </div>
+                                <div className={styles.miniInfo}>
+                                    <h3>
+                                        {user?.first_name && user?.last_name
+                                            ? `${user.first_name} ${user.last_name}`
+                                            : user?.fullname || "User"}
+                                    </h3>
+                                    <p>@{user.username}</p>
+                                    {user.title && (
+                                        <p className={styles.miniTitle}>
+                                            {user.title}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className={styles.limitedStats}>
+                                <div className={styles.stat}>
+                                    <strong>{followers}</strong>
+                                    <span>Followers</span>
+                                </div>
+                                <div className={styles.stat}>
+                                    <strong>
+                                        {user?.following_count || 0}
+                                    </strong>
+                                    <span>Following</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="container">
+                <div className={styles.onlyMeProfile}>
+                    <div className={styles.onlyMeContent}>
+                        <div className={styles.eyeIcon}>👁️‍🗨️</div>
+                        <h2 className={styles.onlyMeTitle}>
+                            This profile is set to "Only Me"
+                        </h2>
+                        <p className={styles.onlyMeDescription}>
+                            {user.first_name || user.username} has set their
+                            profile to private mode. Only they can see their
+                            posts and profile information.
+                        </p>
+
+                        <div className={styles.restrictedInfo}>
+                            <div className={styles.infoItem}>
+                                <span className={styles.infoIcon}>🔐</span>
+                                <span>Posts are completely private</span>
+                            </div>
+                            <div className={styles.infoItem}>
+                                <span className={styles.infoIcon}>🚫</span>
+                                <span>No one can follow or see activity</span>
+                            </div>
+                            <div className={styles.infoItem}>
+                                <span className={styles.infoIcon}>✉️</span>
+                                <span>Messages may be limited</span>
+                            </div>
+                        </div>
+
+                        {!isOwnProfile && (
+                            <div className={styles.onlyMeActions}>
+                                <Button
+                                    variant="ghost"
+                                    size="md"
+                                    onClick={handleMessageClick}
+                                    disabled
+                                >
+                                    Message Unavailable
+                                </Button>
+                                <p className={styles.helpText}>
+                                    You can try contacting them through other
+                                    means
+                                </p>
+                            </div>
+                        )}
+
+                        <div className={styles.publicProfileInfo}>
+                            <div className={styles.miniAvatar}>
+                                <div className={styles.avatarPlaceholder}>
+                                    👤
+                                </div>
+                            </div>
+                            <div className={styles.miniInfo}>
+                                <h3>@{user.username}</h3>
+                                <p>Profile not available</p>
+                            </div>
+                        </div>
+
+                        <div className={styles.hiddenStats}>
+                            <div className={styles.stat}>
+                                <strong>--</strong>
+                                <span>Posts</span>
+                            </div>
+                            <div className={styles.stat}>
+                                <strong>--</strong>
+                                <span>Followers</span>
+                            </div>
+                            <div className={styles.stat}>
+                                <strong>--</strong>
+                                <span>Following</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -482,12 +666,7 @@ const Profile = () => {
             {/* Chat Window */}
             {!isOwnProfile && (
                 <ChatWindow
-                    user={{
-                        first_name: user.first_name,
-                        last_name: user.last_name,
-                        avatar: user.avatar,
-                        username: user.username,
-                    }}
+                    user={profile}
                     isOpen={isChatOpen}
                     isMinimized={isChatMinimized}
                     onClose={handleChatClose}

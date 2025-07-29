@@ -5,6 +5,12 @@ export const getConversationByName = async (name) => {
     return result;
 };
 
+export const create = async (data) => {
+    const result = await httpRequest.post(`/conversation`, data);
+    return result;
+};
+
 export default {
     getConversationByName,
+    create,
 };

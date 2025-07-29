@@ -24,33 +24,6 @@ const Topic = () => {
     const [totalPages, setTotalPages] = useState(1);
     const postsPerPage = 10;
 
-    // const generateMockPosts = (topicName, page = 1) => {
-    //     const posts = [];
-    //     const startIndex = (page - 1) * postsPerPage;
-
-    //     for (let i = 1; i <= postsPerPage; i++) {
-    //         const postIndex = startIndex + i;
-    //         posts.push({
-    //             id: `${slug}-${postIndex}`,
-    //             title: `${topicName} Tutorial ${postIndex}: Advanced Concepts and Best Practices`,
-    //             excerpt: `Learn advanced ${topicName} concepts in this comprehensive tutorial. We'll cover important topics, best practices, and real-world examples that will help you become a better developer.`,
-    //             slug: `${slug}-tutorial-${postIndex}`,
-    //             user: {
-    //                 name: "John Doe",
-    //                 avatar: `https://via.placeholder.com/32?text=JD`,
-    //                 first_name: "ss",
-    //                 last_name: "sád",
-    //             },
-    //             published_at: new Date(2024, 0, postIndex).toISOString(),
-    //             readTime: Math.floor(Math.random() * 10) + 3,
-    //             topic: topicName,
-    //             featuredImage: `https://via.placeholder.com/400x200?text=${topicName}+${postIndex}`,
-    //         });
-    //     }
-
-    //     return posts;
-    // };
-
     // Fetch topic data
     useEffect(() => {
         const fetchTopic = async () => {

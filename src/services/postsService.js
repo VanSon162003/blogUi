@@ -50,6 +50,11 @@ export const create = async (data) => {
     return result;
 };
 
+export const updateViews = async (id) => {
+    const result = await httpRequest.post(`/posts/views/${id}`);
+    return result;
+};
+
 export default {
     getAll,
     getAllByMe,
@@ -61,4 +66,5 @@ export default {
     getPostsRelate,
     getByUserName,
     create,
+    updateViews,
 };
