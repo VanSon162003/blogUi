@@ -27,10 +27,19 @@ export const settings = async (data) => {
     return result;
 };
 
+export const readNotification = async (notificationIds) => {
+    const result = await httpRequest.post(
+        `/users/notifications`,
+        notificationIds
+    );
+    return result;
+};
+
 export default {
     checkFollower,
     toggleFollower,
     getUserByUsername,
     editProfile,
     settings,
+    readNotification,
 };

@@ -129,6 +129,7 @@ const CommentSection = ({
                     comments.map((comment) => {
                         return (
                             <CommentItem
+                                id={`${comment.user.username}`}
                                 key={comment.id}
                                 comment={comment}
                                 onReply={

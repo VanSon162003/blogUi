@@ -257,6 +257,7 @@ const ChatWindow = ({
                         await chatRealtimeService.sendMessage({
                             channel: channelName,
                             message: message.trim(),
+                            recipientId: user.id,
                         });
 
                     // Thêm tin nhắn vào state ngay lập tức cho người gửi

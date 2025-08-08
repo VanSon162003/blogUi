@@ -122,6 +122,7 @@ const Login = () => {
                 <div className={styles.formOptions}>
                     <label className={styles.checkboxLabel}>
                         <input
+                            autoComplete="false"
                             type="checkbox"
                             name="rememberMe"
                             checked={formData.rememberMe}

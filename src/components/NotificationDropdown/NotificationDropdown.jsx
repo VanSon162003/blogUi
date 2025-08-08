@@ -3,6 +3,8 @@ import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import Badge from "../Badge/Badge";
 import styles from "./NotificationDropdown.module.scss";
+import usersService from "../../services/usersService";
+import { toast } from "react-toastify";
 
 const NotificationDropdown = ({
     notifications = [],
@@ -19,6 +21,12 @@ const NotificationDropdown = ({
     const dropdownRef = useRef(null);
     const triggerRef = useRef(null);
     const notificationRefs = useRef([]);
+
+    const [countUnread, setCountUnread] = useState(unreadCount);
+
+    useEffect(() => {
+        setCountUnread(unreadCount);
+    }, [unreadCount]);
 
     // Focus management for accessibility
     useEffect(() => {
@@ -73,8 +81,11 @@ const NotificationDropdown = ({
 
         try {
             await onMarkAsRead(notificationId);
+            await usersService.readNotification({ ids: notificationId });
+            setCountUnread((prev) => (prev === 0 ? prev : prev - 1));
         } catch (error) {
             console.error("Failed to mark notification as read:", error);
+            toast.error(error);
         } finally {
             setMarkingAsRead((prev) => {
                 const newSet = new Set(prev);
@@ -88,7 +99,12 @@ const NotificationDropdown = ({
         if (!onMarkAllAsRead) return;
 
         try {
+            const ids = notifications.map((n) => n.id);
+
             await onMarkAllAsRead();
+            await usersService.readNotification({ ids });
+
+            setCountUnread(0);
         } catch (error) {
             console.error("Failed to mark all notifications as read:", error);
         }
@@ -187,7 +203,7 @@ const NotificationDropdown = ({
                 className={`${styles.trigger} ${isOpen ? styles.active : ""}`}
                 onClick={onToggle}
                 aria-label={`Notifications${
-                    unreadCount > 0 ? ` (${unreadCount} unread)` : ""
+                    countUnread > 0 ? ` (${countUnread} unread)` : ""
                 }`}
                 aria-expanded={isOpen}
                 aria-haspopup="menu"
@@ -205,14 +221,14 @@ const NotificationDropdown = ({
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
-                {unreadCount > 0 && (
+                {countUnread > 0 && (
                     <Badge
                         variant="error"
                         size="sm"
                         className={styles.badge}
-                        aria-label={`${unreadCount} unread notifications`}
+                        aria-label={`${countUnread} unread notifications`}
                     >
-                        {unreadCount > 99 ? "99+" : unreadCount}
+                        {countUnread > 99 ? "99+" : countUnread}
                     </Badge>
                 )}
             </button>
@@ -230,7 +246,7 @@ const NotificationDropdown = ({
                         <h3 className={styles.title} id="notifications-title">
                             Notifications
                         </h3>
-                        {unreadCount > 0 && (
+                        {countUnread > 0 && (
                             <button
                                 className={styles.markAllRead}
                                 onClick={handleMarkAllAsRead}
@@ -274,64 +290,83 @@ const NotificationDropdown = ({
                             >
                                 {notifications
                                     .slice(0, 10)
-                                    .map((notification) => (
-                                        <Link
-                                            key={notification.id}
-                                            to={notification.link || "#"}
-                                            className={`${styles.item} ${
-                                                !notification.read
-                                                    ? styles.unread
-                                                    : ""
-                                            } ${getNotificationTypeColor(
-                                                notification.type
-                                            )}`}
-                                            onClick={() =>
-                                                handleMarkAsRead(
-                                                    notification.id
-                                                )
-                                            }
-                                        >
-                                            <div className={styles.icon}>
-                                                {getNotificationIcon(
+                                    .map((notification) => {
+                                        console.log(notification);
+
+                                        return (
+                                            <Link
+                                                key={notification.id}
+                                                to={notification.link || "#"}
+                                                className={`${styles.item} ${
+                                                    !notification
+                                                        .UserNotification
+                                                        ?.read_at
+                                                        ? styles.unread
+                                                        : ""
+                                                } ${getNotificationTypeColor(
                                                     notification.type
-                                                )}
-                                            </div>
-
-                                            <div className={styles.itemContent}>
-                                                <div className={styles.message}>
-                                                    {notification.message}
-                                                </div>
-                                                <time className={styles.time}>
-                                                    {formatTimeAgo(
-                                                        notification.createdAt
-                                                    )}
-                                                </time>
-                                            </div>
-
-                                            {!notification.read && (
-                                                <button
-                                                    className={styles.markRead}
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        handleMarkAsRead(
-                                                            notification.id
-                                                        );
-                                                    }}
-                                                    disabled={markingAsRead.has(
+                                                )}`}
+                                                onClick={() =>
+                                                    handleMarkAsRead(
                                                         notification.id
+                                                    )
+                                                }
+                                            >
+                                                <div className={styles.icon}>
+                                                    {getNotificationIcon(
+                                                        notification.type
                                                     )}
-                                                    title="Mark as read"
+                                                </div>
+
+                                                <div
+                                                    className={
+                                                        styles.itemContent
+                                                    }
                                                 >
                                                     <div
                                                         className={
-                                                            styles.unreadDot
+                                                            styles.message
                                                         }
-                                                    />
-                                                </button>
-                                            )}
-                                        </Link>
-                                    ))}
+                                                    >
+                                                        {notification.message}
+                                                    </div>
+                                                    <time
+                                                        className={styles.time}
+                                                    >
+                                                        {formatTimeAgo(
+                                                            notification.createdAt
+                                                        )}
+                                                    </time>
+                                                </div>
+
+                                                {!notification.UserNotification
+                                                    ?.read_at && (
+                                                    <button
+                                                        className={
+                                                            styles.markRead
+                                                        }
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            handleMarkAsRead(
+                                                                notification.id
+                                                            );
+                                                        }}
+                                                        disabled={markingAsRead.has(
+                                                            notification.id
+                                                        )}
+                                                        title="Mark as read"
+                                                    >
+                                                        <div
+                                                            className={
+                                                                styles.unreadDot
+                                                            }
+                                                        />
+                                                    </button>
+                                                )}
+                                            </Link>
+                                        );
+                                    })}
                             </div>
                         )}
 
@@ -357,8 +392,13 @@ NotificationDropdown.propTypes = {
         PropTypes.shape({
             id: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
                 .isRequired,
-            type: PropTypes.oneOf(["like", "comment", "follow", "general"])
-                .isRequired,
+            type: PropTypes.oneOf([
+                "like",
+                "comment",
+                "follow",
+                "message",
+                "general",
+            ]).isRequired,
             message: PropTypes.string.isRequired,
             link: PropTypes.string,
             read: PropTypes.bool,

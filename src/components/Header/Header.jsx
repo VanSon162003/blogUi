@@ -7,6 +7,7 @@ import NotificationDropdown from "../NotificationDropdown/NotificationDropdown";
 import styles from "./Header.module.scss";
 import useUser from "../../hook/useUser";
 import isHttps from "../../utils/isHttps";
+import socketClient from "../../utils/websocket";
 
 const Header = () => {
     // Mock authentication state - trong thực tế sẽ từ context/store
@@ -15,65 +16,77 @@ const Header = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
     const notificationRef = useRef(null);
 
     const { currentUser } = useUser();
 
+    const [notifications, setNotifications] = useState([]);
     useEffect(() => {
         if (currentUser) {
             setIsAuthenticated(true);
             setUser(currentUser.data);
+            setNotifications(currentUser.data.notifications.reverse());
         }
     }, [currentUser]);
 
-    // Mock notifications data
-    const mockNotifications = [
-        {
-            id: 1,
-            type: "like",
-            message: 'Sarah Johnson liked your post "Advanced React Patterns"',
-            link: "/blog/advanced-react-patterns",
-            read: false,
-            createdAt: "2024-01-20T10:30:00Z",
-        },
-        {
-            id: 2,
-            type: "comment",
-            message:
-                'Mike Chen commented on your post "Building Scalable APIs"',
-            link: "/blog/building-scalable-apis",
-            read: false,
-            createdAt: "2024-01-20T09:15:00Z",
-        },
-        {
-            id: 3,
-            type: "follow",
-            message: "Emily Rodriguez started following you",
-            link: "/profile/emily-rodriguez",
-            read: true,
-            createdAt: "2024-01-19T16:45:00Z",
-        },
-        {
-            id: 4,
-            type: "like",
-            message: 'David Kim and 5 others liked your post "CSS Grid Guide"',
-            link: "/blog/css-grid-guide",
-            read: true,
-            createdAt: "2024-01-19T14:20:00Z",
-        },
-    ];
+    useEffect(() => {
+        if (notifications.length > 0) {
+            const sum = notifications.filter(
+                (n) => !n.UserNotification?.read_at
+            ).length;
 
-    const [notifications, setNotifications] = useState(mockNotifications);
-    const unreadCount = notifications.filter((n) => !n.read).length;
+            setUnreadCount(sum);
+        }
+    }, [notifications]);
 
-    // Toggle auth state for demo (remove in production)
-    // const toggleAuth = () => {
-    //     setIsAuthenticated(!isAuthenticated);
-    //     setIsDropdownOpen(false);
-    // };
+    useEffect(() => {
+        if (user) {
+            // notification message
+            const channel = socketClient.subscribe(`user-${user?.id}`);
+            channel.bind("notification-new-message", (data) => {
+                setNotifications((prev) => [data, ...prev]);
+            });
+
+            // follow
+
+            const channelFollow = socketClient.subscribe(`follow-${user.id}`);
+
+            channelFollow.bind("notification-new-follow", function (data) {
+                setNotifications((prev) => [data, ...prev]);
+            });
+
+            // like post
+            const channelLikePost = socketClient.subscribe(`like-${user.id}`);
+
+            channelLikePost.bind("notification-new-like-post", function (data) {
+                setNotifications((prev) => [data, ...prev]);
+            });
+
+            // comment post
+            const channelCommentPost = socketClient.subscribe(
+                `comment-${user.id}`
+            );
+
+            channelCommentPost.bind(
+                "notification-new-comment-post",
+                function (data) {
+                    setNotifications((prev) => [data, ...prev]);
+                }
+            );
+
+            return () => {
+                channel.unsubscribe();
+                channelFollow.unsubscribe();
+                channelLikePost.unsubscribe();
+                channelCommentPost.unsubscribe();
+            };
+        }
+    }, [user]);
 
     // Close dropdown when clicking outside
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (
@@ -126,7 +139,7 @@ const Header = () => {
         setNotifications((prev) =>
             prev.map((notification) =>
                 notification.id === notificationId
-                    ? { ...notification, read: true }
+                    ? { ...notification, read_at: Date.now() }
                     : notification
             )
         );
@@ -134,7 +147,10 @@ const Header = () => {
 
     const handleMarkAllAsRead = async () => {
         setNotifications((prev) =>
-            prev.map((notification) => ({ ...notification, read: true }))
+            prev.map((notification) => ({
+                ...notification,
+                read_at: Date.now(),
+            }))
         );
     };
 
