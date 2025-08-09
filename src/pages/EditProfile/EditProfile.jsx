@@ -280,10 +280,13 @@ const EditProfile = () => {
             formDataToSend.append("linkedin_url", formData.social.linkedin_url);
 
             // Thêm skills (convert array)
-            const skillsArray = formData?.skills
-                ?.split(",")
-                ?.map((skill) => skill.trim())
-                ?.filter((skill) => skill.length > 0);
+            const skillsArray =
+                formData.skills.length === 0
+                    ? []
+                    : formData?.skills
+                          ?.split(",")
+                          ?.map((skill) => skill.trim())
+                          ?.filter((skill) => skill.length > 0);
             formDataToSend.append("skills", JSON.stringify(skillsArray));
 
             // Thêm privacy settings
