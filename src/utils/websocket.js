@@ -7,7 +7,7 @@ const socketClient = new PusherJS("app1", {
     forceTLS: false,
     encrypted: true,
     disableStats: true,
-    enabledTransports: ["ws", "wss"],
+    enabledTransports: ["ws"],
 });
 
 export default socketClient;
