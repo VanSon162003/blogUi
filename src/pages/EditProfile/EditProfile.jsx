@@ -280,7 +280,7 @@ const EditProfile = () => {
             formDataToSend.append("linkedin_url", formData.social.linkedin_url);
 
             // Thêm skills (convert array)
-            const skillsArray = formData.skills
+            const skillsArray = formData?.skills
                 ?.split(",")
                 ?.map((skill) => skill.trim())
                 ?.filter((skill) => skill.length > 0);
