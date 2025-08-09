@@ -18,8 +18,6 @@ const EditProfile = () => {
     // Mock current user data - trong thực tế sẽ fetch từ API hoặc context
     const { currentUser } = useUser();
 
-    console.log(settings);
-
     useEffect(() => {
         if (currentUser) {
             setUser(currentUser?.data);
@@ -283,31 +281,17 @@ const EditProfile = () => {
 
             // Thêm skills (convert array)
             const skillsArray = formData.skills
-                .split(",")
-                .map((skill) => skill.trim())
-                .filter((skill) => skill.length > 0);
+                ?.split(",")
+                ?.map((skill) => skill.trim())
+                ?.filter((skill) => skill.length > 0);
             formDataToSend.append("skills", JSON.stringify(skillsArray));
 
             // Thêm privacy settings
             formDataToSend.append("privacy", JSON.stringify(formData.privacy));
 
             // Debug FormData
-            console.log("Sending data:");
-            for (let pair of formDataToSend.entries()) {
-                if (pair[1] instanceof File) {
-                    console.log(`${pair[0]}:`, {
-                        name: pair[1].name,
-                        size: pair[1].size,
-                        type: pair[1].type,
-                    });
-                } else {
-                    console.log(`${pair[0]}: ${pair[1]}`);
-                }
-            }
 
-            const result = await usersService.editProfile(formDataToSend);
-
-            console.log("Response:", result);
+            await usersService.editProfile(formDataToSend);
 
             // Navigate back to profile with success message
             navigate(`/profile/${formData.username}`, {
@@ -602,7 +586,7 @@ const EditProfile = () => {
                             <h3>Skills</h3>
                             <Input
                                 label="Skills (comma separated)"
-                                value={formData.skills}
+                                value={formData?.skills}
                                 onChange={(e) =>
                                     handleInputChange("skills", e.target.value)
                                 }
