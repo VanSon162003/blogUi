@@ -109,7 +109,7 @@ const EditProfile = () => {
 
     const handleInputChange = (field, value) => {
         if (field.startsWith("social.")) {
-            const socialField = field.split(".")[1];
+            const socialField = field?.split(".")[1];
             setFormData((prev) => ({
                 ...prev,
                 social: {
@@ -118,7 +118,7 @@ const EditProfile = () => {
                 },
             }));
         } else if (field.startsWith("privacy.")) {
-            const privacyField = field.split(".")[1];
+            const privacyField = field?.split(".")[1];
             setFormData((prev) => {
                 return {
                     ...prev,
