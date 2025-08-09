@@ -4,8 +4,6 @@ const httpRequest = axios.create({
     baseURL: import.meta.env.VITE_BASE_URL,
 });
 
-console.log(import.meta.env.VITE_BASE_URL);
-
 let isRefreshing = false;
 let tokenListeners = [];
 
