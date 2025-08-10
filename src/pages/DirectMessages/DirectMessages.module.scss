@@ -253,6 +253,9 @@
             background-color: $primary-500;
             color: $text-white;
         }
+        .messageText {
+            color: #fff;
+        }
     }
 
     &.received {

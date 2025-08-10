@@ -5,6 +5,11 @@ import Input from "../../components/Input/Input";
 import FallbackImage from "../../components/FallbackImage/FallbackImage";
 import styles from "./DirectMessages.module.scss";
 import isHttps from "../../utils/isHttps";
+import conversationService from "../../services/conversationService";
+import messagesService from "../../services/messageService";
+import useUser from "../../hook/useUser";
+import socketClient from "../../utils/websocket";
+import chatRealtimeService from "../../services/chatRealtimeService";
 
 const DirectMessages = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -13,117 +18,155 @@ const DirectMessages = () => {
     const [selectedConversation, setSelectedConversation] = useState(null);
     const messagesEndRef = useRef(null);
 
-    // Mock data - in real app this would come from API
-    const [conversations, setConversations] = useState([
-        {
-            id: 1,
-            participant: {
-                id: 2,
-                name: "Sarah Chen",
-                username: "sarahc",
-                avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face",
-            },
-            lastMessage: {
-                text: "Hey! Did you see the latest blog post about React hooks?",
-                timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 mins ago
-                senderId: 2,
-            },
-            unreadCount: 2,
-            isOnline: true,
-        },
-        {
-            id: 2,
-            participant: {
-                id: 3,
-                name: "Alex Johnson",
-                username: "alexj",
-                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face",
-            },
-            lastMessage: {
-                text: "Thanks for the feedback on my article!",
-                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-                senderId: 1,
-            },
-            unreadCount: 0,
-            isOnline: false,
-        },
-        {
-            id: 3,
-            participant: {
-                id: 4,
-                name: "Emily Davis",
-                username: "emilyd",
-                avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=32&h=32&fit=crop&crop=face",
-            },
-            lastMessage: {
-                text: "Would love to collaborate on a project!",
-                timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-                senderId: 4,
-            },
-            unreadCount: 1,
-            isOnline: true,
-        },
-    ]);
+    const [conversations, setConversations] = useState([]);
+    const [checkParams, setCheckParams] = useState([]);
 
-    const [messages, setMessages] = useState({
-        1: [
-            {
-                id: 1,
-                text: "Hi! I really enjoyed your latest post about TypeScript best practices.",
-                senderId: 2,
-                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            },
-            {
-                id: 2,
-                text: "Thank you! I'm glad you found it helpful. Are you using TypeScript in your projects?",
-                senderId: 1,
-                timestamp: new Date(Date.now() - 90 * 60 * 1000),
-            },
-            {
-                id: 3,
-                text: "Yes, we just migrated our entire React app to TypeScript. The type safety is amazing!",
-                senderId: 2,
-                timestamp: new Date(Date.now() - 60 * 60 * 1000),
-            },
-            {
-                id: 4,
-                text: "Hey! Did you see the latest blog post about React hooks?",
-                senderId: 2,
-                timestamp: new Date(Date.now() - 30 * 60 * 1000),
-            },
-        ],
-        2: [
-            {
-                id: 5,
-                text: "Thanks for the feedback on my article!",
-                senderId: 1,
-                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            },
-        ],
-        3: [
-            {
-                id: 6,
-                text: "Would love to collaborate on a project!",
-                senderId: 4,
-                timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-            },
-        ],
-    });
+    const [messages, setMessages] = useState({});
+    const [user, setUser] = useState(null);
+    const [channelName, setChannelName] = useState(null);
+    const [recipientId, setRecipientId] = useState(null);
+
+    const { currentUser } = useUser();
+
+    useEffect(() => {
+        if (currentUser?.data) setUser(currentUser.data);
+    }, [currentUser]);
+
+    const timestamp = (time) => {
+        if (!time) {
+            return new Date(Date.now() - 24 * 60 * 60 * 1000);
+        }
+
+        const date = new Date(time);
+
+        if (isNaN(date.getTime())) {
+            return new Date(Date.now() - 24 * 60 * 60 * 1000);
+        }
+
+        return date;
+    };
+    useEffect(() => {
+        (async () => {
+            const result = await conversationService.getAll();
+            result.data.forEach((item) => {
+                setConversations((prev) => [
+                    ...prev,
+                    {
+                        id: item.id,
+                        participant: {
+                            id: item.otherUsers[0].id,
+                            name: item.otherUsers[0].fullname,
+                            username: item.otherUsers[0].username,
+                            avatar: item.otherUsers[0].avatar,
+                        },
+                        lastMessage: {
+                            text: item.otherUsers[0]?.messages[0]?.content,
+                            timestamp: timestamp(
+                                item.otherUsers?.[0]?.messages?.[0]?.createdAt
+                            ),
+                            senderId: item.otherUsers[0]?.id,
+                        },
+                        unreadCount: 0,
+                        isOnline: true,
+                    },
+                ]);
+            });
+        })();
+    }, []);
 
     // Get conversation ID from URL params
     useEffect(() => {
         const conversationId = searchParams.get("conversation");
-        if (conversationId) {
-            const conversation = conversations.find(
-                (c) => c.id === parseInt(conversationId)
-            );
-            if (conversation) {
-                setSelectedConversation(conversation);
-                // Mark as read
-                markAsRead(conversation.id);
+
+        if (!conversationId) return;
+
+        const conversation = conversations.find(
+            (c) => c.id === parseInt(conversationId)
+        );
+
+        if (!conversation) return;
+
+        (async () => {
+            if (!checkParams.includes(conversationId)) {
+                const result =
+                    await messagesService.getAllMessageByConversationId(
+                        conversationId
+                    );
+
+                setMessages((prev) => {
+                    const newMessages = result.data.map((item) => ({
+                        id: item.id,
+                        text: item.content,
+                        senderId: item.user.id,
+                        timestamp: timestamp(item.createdAt),
+                    }));
+
+                    return {
+                        ...prev,
+                        [conversation.id]: [
+                            ...(prev[conversation.id] || []),
+                            ...newMessages,
+                        ],
+                    };
+                });
+
+                setCheckParams((prev) => [...prev, conversationId]);
             }
+        })();
+
+        setSelectedConversation(conversation);
+
+        // Mark as read
+        markAsRead(conversation.id);
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (user) {
+            (async () => {
+                const conversationId = searchParams.get("conversation");
+
+                if (!checkParams.includes(conversationId)) {
+                    const result = await conversationService.getOne(
+                        conversationId
+                    );
+                    console.log(result);
+
+                    const name = result.data.name;
+                    setRecipientId(result.data.users[0].id);
+                    setChannelName(name);
+
+                    const channel = socketClient.subscribe(name);
+
+                    channel.bind("new-message", function (data) {
+                        if (data.user_id !== currentUser.data.id) {
+                            console.log(data);
+
+                            setMessages((prev) => {
+                                const newMessages = {
+                                    id: data.id,
+                                    text: data.content,
+                                    senderId: data.user_id,
+                                    timestamp: timestamp(data.createdAt),
+                                };
+
+                                return {
+                                    ...prev,
+                                    [data.conversation_id]: [
+                                        ...(prev[data.conversation_id] || []),
+                                        ...newMessages,
+                                    ],
+                                };
+                            });
+                        }
+                    });
+
+                    return () => {
+                        channel.unsubscribe();
+                    };
+                }
+            })();
         }
-    }, [searchParams]); // Remove conversations from dependency to avoid infinite loop
+    }, [searchParams, user]);
 
     // Auto-scroll to bottom when messages change
     useEffect(() => {
@@ -154,9 +197,17 @@ const DirectMessages = () => {
         const message = {
             id: Date.now(),
             text: newMessage.trim(),
-            senderId: 1, // Current user ID
+            senderId: user.id,
             timestamp: new Date(),
         };
+
+        (async () => {
+            await chatRealtimeService.sendMessage({
+                channel: channelName,
+                message: newMessage.trim(),
+                recipientId,
+            });
+        })();
 
         // Add message to conversation
         setMessages((prev) => ({
@@ -204,16 +255,17 @@ const DirectMessages = () => {
         if (minutes < 60) return `${minutes}m`;
         if (hours < 24) return `${hours}h`;
         if (days < 7) return `${days}d`;
+
         return date.toLocaleDateString();
     };
 
     const filteredConversations = conversations.filter(
         (conv) =>
-            conv.participant.name
-                .toLowerCase()
+            conv?.participant?.name
+                ?.toLowerCase()
                 .includes(searchQuery.toLowerCase()) ||
-            conv.participant.username
-                .toLowerCase()
+            conv?.participant?.username
+                ?.toLowerCase()
                 .includes(searchQuery.toLowerCase())
     );
 
@@ -378,7 +430,7 @@ const DirectMessages = () => {
                                     <div
                                         key={message.id}
                                         className={`${styles.message} ${
-                                            message.senderId === 1
+                                            message.senderId === user.id
                                                 ? styles.sent
                                                 : styles.received
                                         }`}
