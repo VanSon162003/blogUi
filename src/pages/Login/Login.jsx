@@ -60,6 +60,7 @@ const Login = () => {
         }
 
         setIsSubmitting(true);
+        console.log(formData);
 
         try {
             const { data } = await authService.login({
@@ -67,11 +68,12 @@ const Login = () => {
                 password: formData.password,
             });
             toast.success("Login success");
-            console.log(data);
 
             localStorage.setItem("token", data.access_token);
-            localStorage.setItem("refresh_token", data.refresh_token);
 
+            if (formData.rememberMe) {
+                localStorage.setItem("refresh_token", data.refresh_token);
+            }
             // Navigate to home or dashboard
             navigate("/", { replace: true });
         } catch (error) {
