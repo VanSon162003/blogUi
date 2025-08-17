@@ -37,3 +37,4 @@ export { default as AuthorInfo } from "./AuthorInfo/AuthorInfo";
 export { default as RelatedPosts } from "./RelatedPosts/RelatedPosts";
 export { default as CommentSection } from "./CommentSection/CommentSection";
 export { default as CommentItem } from "./CommentItem/CommentItem";
+export { default as Chat } from "./Chat/Chat";

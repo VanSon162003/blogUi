@@ -20,4 +20,21 @@ export const create = async (data) => {
     return result;
 };
 
-export default { getAll, getOne, getConversationByName, create };
+export const removeChat = async (id) => {
+    const result = await httpRequest.del(`/conversation/${id}/chat`);
+    return result;
+};
+
+export const chatBot = async (id, message) => {
+    const result = await httpRequest.post(`/conversation/${id}/chat`, message);
+    return result;
+};
+
+export default {
+    getAll,
+    getOne,
+    getConversationByName,
+    create,
+    chatBot,
+    removeChat,
+};
