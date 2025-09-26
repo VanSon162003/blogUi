@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
 import Button from "../Button/Button";
@@ -42,6 +42,8 @@ const PublishModal = ({
     handleRemoveTopic,
     handleImageUpload,
     isPublishing = false,
+    isEditing = false,
+    editData = null,
 }) => {
     const [isScheduled, setIsScheduled] = useState(false);
     const [publishDate, setPublishDate] = useState("");
@@ -61,6 +63,34 @@ const PublishModal = ({
             publishDate: isScheduled ? publishDate : null,
         });
     };
+
+    useEffect(() => {
+        if (isEditing && editData && isOpen) {
+            setFormData((prev) => ({
+                ...prev,
+                meta_title: editData.meta_title || "",
+                meta_description: editData.meta_description || "",
+                visibility: editData.visibility || "public",
+                thumbnail: editData.thumbnail || "",
+                previewThumbnail: editData.thumbnail
+                    ? editData.thumbnail.startsWith("http")
+                        ? editData.thumbnail
+                        : `${import.meta.env.VITE_BASE_URL}/${
+                              editData.thumbnail
+                          }`
+                    : null,
+            }));
+
+            if (editData.published_at) {
+                const publishTime = new Date(editData.published_at);
+                const now = new Date();
+                if (publishTime > now) {
+                    setIsScheduled(true);
+                    setPublishDate(publishTime.toISOString().slice(0, 16));
+                }
+            }
+        }
+    }, [isEditing, editData, isOpen, setFormData]);
 
     const renderVisibilityOptions = () =>
         visibilityOptions.map((option) => (
@@ -87,9 +117,19 @@ const PublishModal = ({
         ));
 
     const renderCoverImage = () => {
-        if (formData.previewThumbnail) {
-            const imageUrl = formData.previewThumbnail;
+        let imageUrl = formData.previewThumbnail;
 
+        if (!imageUrl && formData.thumbnail) {
+            if (typeof formData.thumbnail === "string") {
+                imageUrl = formData.thumbnail.startsWith("http")
+                    ? formData.thumbnail
+                    : `${import.meta.env.VITE_BASE_URL}/${formData.thumbnail}`;
+            } else if (formData.thumbnail instanceof File) {
+                imageUrl = URL.createObjectURL(formData.thumbnail);
+            }
+        }
+
+        if (imageUrl) {
             return (
                 <div className={styles.imagePreview}>
                     <FallbackImage
@@ -116,6 +156,8 @@ const PublishModal = ({
                             onClick={() =>
                                 setFormData((prev) => ({
                                     ...prev,
+                                    thumbnail: "",
+                                    previewThumbnail: null,
                                     coverImage: "",
                                 }))
                             }
@@ -127,6 +169,7 @@ const PublishModal = ({
                 </div>
             );
         }
+
         return (
             <div className={styles.uploadArea}>
                 <input
@@ -331,6 +374,8 @@ PublishModal.propTypes = {
     handleRemoveTopic: PropTypes.func.isRequired,
     handleImageUpload: PropTypes.func.isRequired,
     isPublishing: PropTypes.bool,
+    isEditing: PropTypes.bool,
+    editData: PropTypes.object,
 };
 
 export default PublishModal;

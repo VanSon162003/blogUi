@@ -41,6 +41,16 @@ const WritePost = () => {
     const headerRef = useRef(null);
 
     useEffect(() => {
+        if (slug) {
+            (async () => {
+                const { data: post } = await postsService.getBySlug(slug);
+
+                setFormData(post[0]);
+            })();
+        }
+    }, [slug]);
+
+    useEffect(() => {
         (async () => {
             const result = await topicsService.getAll();
             const topics = result.data.map((item) => item.name);
@@ -155,7 +165,10 @@ const WritePost = () => {
         try {
             const form = buildFormData(publishData, "published");
 
-            await postsService.create(form);
+            console.log(form);
+
+            if (!slug) await postsService.create(form);
+            else await postsService.update(slug, form);
 
             console.log("Publishing post:", Object.fromEntries(form.entries()));
             setShowPublishModal(false);

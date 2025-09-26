@@ -1,6 +1,6 @@
 import { useState, memo } from "react";
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Card from "../Card/Card";
 import Badge from "../Badge/Badge";
 import FallbackImage from "../FallbackImage/FallbackImage";
@@ -30,8 +30,12 @@ const PostCard = ({
     showInteractions = true,
     onLike,
     onBookmark,
+    isOwner = false,
+    onDelete,
     ...props
 }) => {
+    const navigate = useNavigate();
+
     const [optimisticLiked, setOptimisticLiked] = useState(isLiked);
     const [optimisticBookmarked, setOptimisticBookmarked] =
         useState(isBookmarked);
@@ -120,6 +124,10 @@ const PostCard = ({
             </Card>
         );
     }
+
+    const onEdit = () => {
+        navigate(`/write/${slug}`);
+    };
 
     return (
         <Card
@@ -273,6 +281,14 @@ const PostCard = ({
                                 </span>
                             )}
                         </div>
+                        {isOwner && (
+                            <div className={styles.managerActions}>
+                                <button onClick={onEdit}>Edit</button>
+                                <button onClick={() => onDelete(id)}>
+                                    Delete
+                                </button>
+                            </div>
+                        )}
 
                         <div className={styles.actions}>
                             {/* Like Button */}
@@ -384,11 +400,13 @@ PostCard.propTypes = {
     likes: PropTypes.number,
     views: PropTypes.number,
     isLiked: PropTypes.bool,
+    isOwner: PropTypes.bool,
     isBookmarked: PropTypes.bool,
     showViewCount: PropTypes.bool,
     showInteractions: PropTypes.bool,
     onLike: PropTypes.func,
     onBookmark: PropTypes.func,
+    onDelete: PropTypes.func,
 };
 
 export default memo(PostCard);

@@ -50,8 +50,18 @@ export const create = async (data) => {
     return result;
 };
 
+export const update = async (slug, data) => {
+    const result = await httpRequest.put(`/posts/${slug}`, data);
+    return result;
+};
+
 export const updateViews = async (id) => {
     const result = await httpRequest.post(`/posts/views/${id}`);
+    return result;
+};
+
+export const remove = async (id) => {
+    const result = await httpRequest.del(`/posts/${id}`);
     return result;
 };
 
@@ -66,5 +76,7 @@ export default {
     getPostsRelate,
     getByUserName,
     create,
+    update,
     updateViews,
+    remove,
 };

@@ -12,73 +12,9 @@ import postsService from "../../services/postsService";
 const MyPosts = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [reFetch, setReFetch] = useState(false);
     const [activeTab, setActiveTab] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
-
-    // Mock data - trong thực tế sẽ fetch từ API
-    // const mockPosts = [
-    //     {
-    //         id: 1,
-    //         title: "Getting Started with React Hooks",
-    //         slug: "getting-started-react-hooks",
-    //         excerpt:
-    //             "Learn the fundamentals of React Hooks and how they can simplify your component logic.",
-    //         coverImage: "https://via.placeholder.com/400x200?text=React+Hooks",
-    //         readingTime: 8,
-    //         publishedAt: "2024-01-15",
-    //         status: "published",
-    //         topics: ["React", "JavaScript"],
-    //         viewsCount: 1250,
-    //         likesCount: 42,
-    //         commentsCount: 15,
-    //     },
-    //     {
-    //         id: 2,
-    //         title: "Advanced CSS Grid Techniques",
-    //         slug: "advanced-css-grid-techniques",
-    //         excerpt:
-    //             "Deep dive into CSS Grid and discover advanced layout techniques for modern web development.",
-    //         coverImage: "https://via.placeholder.com/400x200?text=CSS+Grid",
-    //         readingTime: 12,
-    //         publishedAt: "2024-01-10",
-    //         status: "published",
-    //         topics: ["CSS", "Web Design"],
-    //         viewsCount: 890,
-    //         likesCount: 28,
-    //         commentsCount: 8,
-    //     },
-    //     {
-    //         id: 3,
-    //         title: "Building Scalable APIs with Node.js",
-    //         slug: "building-scalable-apis-nodejs",
-    //         excerpt:
-    //             "Best practices for creating robust and scalable APIs using Node.js and Express.",
-    //         coverImage: "https://via.placeholder.com/400x200?text=Node.js+API",
-    //         readingTime: 15,
-    //         publishedAt: "2024-01-05",
-    //         status: "draft",
-    //         topics: ["Node.js", "Backend"],
-    //         viewsCount: 0,
-    //         likesCount: 0,
-    //         commentsCount: 0,
-    //     },
-    //     {
-    //         id: 4,
-    //         title: "Modern JavaScript ES2024 Features",
-    //         slug: "modern-javascript-es2024-features",
-    //         excerpt:
-    //             "Explore the latest JavaScript features and how they can improve your development workflow.",
-    //         coverImage:
-    //             "https://via.placeholder.com/400x200?text=JavaScript+ES2024",
-    //         readingTime: 10,
-    //         publishedAt: "2023-12-28",
-    //         status: "published",
-    //         topics: ["JavaScript", "ES2024"],
-    //         viewsCount: 2150,
-    //         likesCount: 67,
-    //         commentsCount: 23,
-    //     },
-    // ];
 
     useEffect(() => {
         // Simulate API call
@@ -92,7 +28,7 @@ const MyPosts = () => {
         };
 
         fetchPosts();
-    }, []);
+    }, [reFetch]);
 
     const filteredPosts = posts.filter((post) => {
         const matchesTab = activeTab === "all" || post.status === activeTab;
@@ -153,6 +89,11 @@ const MyPosts = () => {
         }
     };
 
+    const onDelete = async (id) => {
+        await postsService.remove(id);
+
+        setReFetch(!reFetch);
+    };
     return (
         <div className={styles.container}>
             <div className="container">
@@ -282,6 +223,8 @@ const MyPosts = () => {
                                         isBookmarked={
                                             post?.is_bookmark || false
                                         }
+                                        isOwner
+                                        onDelete={onDelete}
                                     />
                                     <div className={styles.postMeta}>
                                         <div className={styles.postStatus}>
